@@ -273,6 +273,57 @@ https://www.douyin.com/discover?modal_id=752..."
       const API_BASE = "";
       let lastMergeData = null;
 
+      async function translateSrt(srtFile, target) {
+        const engine = document.getElementById("translatorEngine").value;
+        const apiKey = document.getElementById("translatorApiKey").value;
+
+        if (engine !== "google" && !apiKey) {
+          alert(
+            `Engine ${engine} cần API Key. Nhập key ở ô "API Key cho DeepL/GPT/Groq"`,
+          );
+          return;
+        }
+
+        const log = document.getElementById("mergeLog");
+        log.style.display = "block";
+        log.textContent += `\n[FRONTEND] Đang dịch ${srtFile} -> ${target} via ${engine}...\n`;
+
+        const payload = {
+          srt_file: srtFile,
+          target: target,
+          engine: engine,
+          api_key: apiKey,
+          job_id: lastMergeData?.job_id || null,
+        };
+
+        try {
+          const res = await fetch(API_BASE + "/api/translate-srt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          log.textContent += JSON.stringify(data, null, 2) + "\n";
+
+          const resultDiv = document.getElementById("mergeResult");
+          if (data.error) {
+            resultDiv.innerHTML += `<div class="result-item"><span class="status-fail">❌ Lỗi dịch: ${data.error}</span></div>`;
+          } else {
+            resultDiv.innerHTML += `<div class="result-item"><span>🌐 Sub ${data.target.toUpperCase()} [${data.engine}]: ${data.srt}</span><a href="${data.srt}" target="_blank">Tải</a></div>`;
+            resultDiv.innerHTML += `<div class="result-item"><span>📄 Text ${data.target.toUpperCase()}: ${data.txt}</span><a href="${data.txt}" target="_blank">Tải</a></div>`;
+            // Lưu lại để dùng cho TTS
+            if (data.target === "vi") {
+              lastMergeData.txt_vi = data.txt;
+              document.getElementById("ttsCard").style.display = "block";
+              document.getElementById("ttsInfo").textContent =
+                "Sẽ dùng file: " + data.txt + " (đã dịch " + data.engine + ")";
+            }
+          }
+        } catch (e) {
+          log.textContent += "❌ " + e.message + "\n";
+        }
+      }
+
       function updateVoices() {
         const engine = document.getElementById("ttsEngine").value;
         const voiceSel = document.getElementById("ttsVoice");
@@ -341,7 +392,14 @@ https://www.douyin.com/discover?modal_id=752..."
           if (data.final_file)
             resultDiv.innerHTML += `<div class="result-item">✅ Video: ${data.final_file} <a href="${data.final_file}" target="_blank">Mở</a></div>`;
           if (data.srt_zh)
-            resultDiv.innerHTML += `<div class="result-item">📝 Sub ZH: ${data.srt_zh} <a href="${data.srt_zh}" target="_blank">Tải</a></div>`;
+            resultDiv.innerHTML += `
+              <div class="result-item">
+                <span>📝 Sub ZH: ${data.srt_zh}</span>
+                <div>
+                  <button class="btn btn-secondary" style="padding:6px 12px;width:auto;margin:0" onclick="translateSrt('${data.srt_zh}', 'vi')">Dịch sang VI</button>
+                  <a href="${data.srt_zh}" target="_blank" style="margin-left:8px">Tải</a>
+                </div>
+              </div>`;
           if (data.translations) {
             Object.keys(data.translations).forEach((lang) => {
               const t = data.translations[lang];

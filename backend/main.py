@@ -316,11 +316,15 @@ async def merge(data: dict):
         for target in translate_targets:
             if target=="zh": continue
             try:
+                print(f"[MAIN] Translating to {target} with engine {translator_engine}")
                 fn=get_translator_fn(translator_engine, target, api_key=api_key)
                 out_srt,out_txt=_translate_blocks(srt_path, fn, target)
                 result["translations"][target]={"srt":f"/downloads/{job_id}/{os.path.basename(out_srt)}","txt":f"/downloads/{job_id}/{os.path.basename(out_txt)}","txt_path":out_txt,"engine":translator_engine}
+                print(f"[MAIN] Translation {target} OK: {out_srt}")
             except Exception as e:
-                result["translations"][target]={"error":str(e)}
+                import traceback; traceback.print_exc()
+                print(f"[MAIN] Translation {target} FAILED: {e}")
+                result["translations"][target]={"error":str(e), "trace": traceback.format_exc()[-1000:]}
         result["files_in_job"]=os.listdir(job_dir)
     except Exception as e:
         import traceback
@@ -329,6 +333,65 @@ async def merge(data: dict):
         result["sub_trace"]=traceback.format_exc()[-1000:]
 
     return result
+
+@app.post("/api/translate-srt")
+async def api_translate_srt(data: dict):
+    srt_file = data.get("srt_file")
+    target = data.get("target", "vi")
+    engine = data.get("engine", "google")
+    api_key = data.get("api_key", None)
+    job_id = data.get("job_id", None)
+
+    if not srt_file:
+        return {"error": "Thiếu srt_file"}
+
+    # Tìm file thực tế
+    # srt_file có thể là /downloads/xxx/file.srt hoặc /downloads/job_id/file.srt
+    if job_id:
+        real_path = os.path.join(DOWNLOAD_DIR, job_id, os.path.basename(srt_file))
+    else:
+        real_path = os.path.join(DOWNLOAD_DIR, os.path.basename(srt_file))
+        # Thử tìm trong các job folder nếu không thấy ở root
+        if not os.path.exists(real_path):
+            for j in os.listdir(DOWNLOAD_DIR):
+                candidate = os.path.join(DOWNLOAD_DIR, j, os.path.basename(srt_file))
+                if os.path.exists(candidate):
+                    real_path = candidate
+                    job_id = j
+                    break
+
+    if not os.path.exists(real_path):
+        return {"error": f"File not found: {real_path}"}
+
+    print(f"[TRANSLATE-API] {real_path} -> {target} via {engine}, job={job_id}")
+
+    try:
+        fn = get_translator_fn(engine, target, api_key=api_key)
+        out_srt, out_txt = _translate_blocks(real_path, fn, target)
+
+        # Trả về đường dẫn đúng job_id
+        if job_id:
+            return {
+                "success": True,
+                "srt": f"/downloads/{job_id}/{os.path.basename(out_srt)}",
+                "txt": f"/downloads/{job_id}/{os.path.basename(out_txt)}",
+                "txt_path": out_txt,
+                "engine": engine,
+                "target": target
+            }
+        else:
+            return {
+                "success": True,
+                "srt": f"/downloads/{os.path.basename(out_srt)}",
+                "txt": f"/downloads/{os.path.basename(out_txt)}",
+                "txt_path": out_txt,
+                "engine": engine,
+                "target": target
+            }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e), "trace": traceback.format_exc()[-1000:]}
 
 @app.post("/api/tts")
 async def make_tts(data: dict):

@@ -31,30 +31,51 @@ def video_to_subs(vid, lang="zh", model_name=None):
     with open(txt,"w",encoding="utf-8") as f: f.write(full.strip())
     return srt,txt,info.language,used
 def _translate_blocks(srt_path, fn, target):
+    print(f"[TRANSLATE] Translating {srt_path} -> {target} using {fn}")
     base=os.path.splitext(srt_path)[0].replace(".zh","")
     out_srt=base+f".{target}.srt"; out_txt=base+f".{target}.txt"
-    with open(srt_path,"r",encoding="utf-8") as f: content=f.read()
+    try:
+        with open(srt_path,"r",encoding="utf-8") as f: content=f.read()
+    except Exception as e:
+        print(f"[TRANSLATE ERROR] Cannot read {srt_path}: {e}")
+        raise
+
     blocks=[b for b in content.strip().split("\n\n") if b.strip()]
+    print(f"[TRANSLATE] Found {len(blocks)} blocks to translate")
     out=[]; full=""
-    for b in blocks:
+    for idx, b in enumerate(blocks):
         lines=b.split("\n")
         if len(lines)>=3:
             src=" ".join(lines[2:]).strip()
             if not src: continue
-            try: tr=fn(src)
-            except Exception as e: print(e); tr=src
+            try:
+                tr=fn(src)
+                print(f"[TRANSLATE {idx}] {src[:30]}... -> {tr[:30]}...")
+            except Exception as e:
+                print(f"[TRANSLATE ERROR block {idx}] {e}")
+                import traceback; traceback.print_exc()
+                tr=src
             out.append(f"{lines[0]}\n{lines[1]}\n{tr}\n")
             full+=tr+" "
+
     with open(out_srt,"w",encoding="utf-8") as f: f.write("\n".join(out))
     with open(out_txt,"w",encoding="utf-8") as f: f.write(full.strip())
+    print(f"[TRANSLATE] Done -> {out_srt}, {out_txt}")
     return out_srt,out_txt
 
 def get_translator_fn(engine, target, api_key=None):
+    print(f"[TRANSLATOR] Engine={engine}, Target={target}, HasKey={bool(api_key)}")
     engine=engine.lower()
     if engine=="google":
-        from deep_translator import GoogleTranslator
-        tr=GoogleTranslator(source='zh-CN', target=target)
-        return lambda t: tr.translate(t)
+        try:
+            from deep_translator import GoogleTranslator
+            tr=GoogleTranslator(source='zh-CN', target=target)
+            print(f"[TRANSLATOR] GoogleTranslator created zh-CN->{target}")
+            return lambda t: tr.translate(t)
+        except Exception as e:
+            print(f"[TRANSLATOR ERROR Google] {e}")
+            import traceback; traceback.print_exc()
+            raise
     elif engine=="deepl":
         import deepl
         if not api_key:
@@ -73,27 +94,10 @@ def get_translator_fn(engine, target, api_key=None):
             raise Exception("Can OpenAI API Key")
         client=OpenAI(api_key=api_key)
         ln="Tiếng Việt" if target=="vi" else "English"
-        return lambda t: client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role":"user","content":f"Dịch sang {ln}, chỉ trả bản dịch, không giải thích: {t}"}],
-            temperature=0.3
-        ).choices[0].message.content.strip()
-    elif engine=="qwen" or engine=="groq":
-        # Qwen 2 via Groq (miễn phí, nhanh)
-        from openai import OpenAI
-        if not api_key:
-            raise Exception("Can Groq API Key (free tại console.groq.com)")
-        client=OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
-        ln="Tiếng Việt" if target=="vi" else "English"
-        # Groq hỗ trợ llama3-70b, mixtral, qwen2
-        return lambda t: client.chat.completions.create(
-            model="qwen2-72b-instruct", # hoặc llama3-70b-8192, mixtral-8x7b-32768
-            messages=[{"role":"user","content":f"Dịch tiếng Trung sang {ln}, chỉ trả bản dịch: {t}"}],
-            temperature=0.2
-        ).choices[0].message.content.strip()
+        return lambda t: client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user","content":f"Dịch sang {ln}, chỉ trả bản dịch: {t}"}], temperature=0.3).choices[0].message.content.strip()
     else:
-        raise Exception(f"Unknown translator engine: {engine}")
-
+        raise Exception(f"Unknown translator {engine}")
+        
 VOICE_DIR=os.path.join(os.path.dirname(__file__),"voices")
 DEFAULT_FEMALE=os.path.join(VOICE_DIR,"my_voice_female.wav")
 DEFAULT_MALE=os.path.join(VOICE_DIR,"my_voice_male.wav")
