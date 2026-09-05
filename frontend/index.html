@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Douyin Video Tool - v10.5 Job Folders</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          -apple-system,
+          BlinkMacSystemFont,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        background: #0a0a0a;
+        color: #e5e5e5;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+        background: linear-gradient(90deg, #ff0050, #ff7a00);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .subtitle {
+        color: #888;
+        margin-bottom: 24px;
+        font-size: 14px;
+      }
+      .card {
+        background: #141414;
+        border: 1px solid #222;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      .card h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+        color: #fff;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        color: #aaa;
+        margin: 12px 0 4px;
+      }
+      textarea,
+      input,
+      select {
+        width: 100%;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        color: #fff;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+      select {
+        cursor: pointer;
+      }
+      input:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: #ff0050;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .btn {
+        background: #ff0050;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 12px;
+        transition: 0.2s;
+      }
+      .btn:hover {
+        background: #e60048;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-secondary {
+        background: #222;
+      }
+      .btn-secondary:hover {
+        background: #333;
+      }
+      .log {
+        background: #0f0f0f;
+        border: 1px solid #222;
+        border-radius: 8px;
+        padding: 12px;
+        font-family: monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow: auto;
+        margin-top: 12px;
+        color: #888;
+      }
+      .result-item {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .result-item a {
+        color: #ff0050;
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .badge {
+        display: inline-block;
+        background: #222;
+        color: #aaa;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 11px;
+        margin-left: 6px;
+      }
+      .status-ok {
+        color: #00c851;
+      }
+      .status-fail {
+        color: #ff4444;
+      }
+      .small {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Douyin Video Tool v10.5</h1>
+      <p class="subtitle">
+        Mỗi lần Merge tạo thư mục riêng downloads/{job_id}/ • Hỗ trợ Piper +
+        DeepL/GPT/Qwen
+      </p>
+
+      <div class="card">
+        <h3>1. Danh sách link Douyin</h3>
+        <textarea
+          id="urls"
+          placeholder="https://www.douyin.com/video/736...
+https://www.douyin.com/discover?modal_id=752..."
+        ></textarea>
+      </div>
+
+      <div class="card">
+        <h3>2. Whisper & Dịch</h3>
+        <div class="row">
+          <div>
+            <label>Model Whisper</label>
+            <select id="whisperModel">
+              <option value="small">Small - Nhanh (500MB)</option>
+              <option value="medium" selected>
+                Medium - Chính xác (1.5GB)
+              </option>
+              <option value="large-v3">Large v3 - Nhất (3GB)</option>
+            </select>
+          </div>
+          <div>
+            <label>Engine dịch</label>
+            <select id="translatorEngine">
+              <option value="google">Google - Miễn phí</option>
+              <option value="deepl">DeepL - Chính xác nhất</option>
+              <option value="gpt">GPT-4o mini - Tự nhiên</option>
+              <option value="qwen">Qwen 2 (Groq) - Nhanh, miễn phí</option>
+              <option value="gemini">Gemini 1.5 Flash</option>
+            </select>
+          </div>
+        </div>
+        <label>API Key cho DeepL / GPT / Groq / Gemini</label>
+        <input
+          id="translatorApiKey"
+          type="password"
+          placeholder="sk-..., groq_..., AIza..."
+        />
+        <label>Dịch sang</label>
+        <select id="translateTarget">
+          <option value="vi">Tiếng Việt</option>
+          <option value="en">English</option>
+          <option value="vi,en">Cả Việt + Anh</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <h3>3. TTS - Tạo giọng đọc</h3>
+        <div class="row">
+          <div>
+            <label>Engine TTS</label>
+            <select id="ttsEngine" onchange="updateVoices()">
+              <option value="edge">Edge TTS - Free</option>
+              <option value="openai">OpenAI TTS</option>
+              <option value="coqui">Coqui XTTS - Clone giọng</option>
+              <option value="piper">Piper TTS - Offline, nhẹ</option>
+            </select>
+          </div>
+          <div>
+            <label>Giọng đọc</label>
+            <select id="ttsVoice"></select>
+          </div>
+        </div>
+        <input
+          id="ttsApiKey"
+          type="password"
+          placeholder="sk-... cho OpenAI TTS"
+          style="display: none"
+        />
+        <select id="customVoiceFile" style="display: none"></select>
+      </div>
+
+      <div class="card">
+        <button class="btn" id="mergeBtn" onclick="mergeVideos()">
+          🚀 Merge + Gen Sub + Dịch
+        </button>
+        <div id="mergeLog" class="log" style="display: none"></div>
+        <div id="mergeResult"></div>
+      </div>
+
+      <div class="card" id="ttsCard" style="display: none">
+        <h3>4. Tạo Audio TTS</h3>
+        <div id="ttsInfo" class="small"></div>
+        <button class="btn btn-secondary" onclick="makeTTS()">
+          🔊 Tạo Audio
+        </button>
+        <div id="ttsResult"></div>
+      </div>
+
+      <div class="card" id="finalCard" style="display: none">
+        <h3>5. Video cuối cùng</h3>
+        <div id="finalResult"></div>
+        <button class="btn" onclick="burnSub()">🔥 Burn Sub</button>
+        <button class="btn btn-secondary" onclick="dubVideo()">
+          🎙️ Ghép audio
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "";
+      let lastMergeData = null;
+
+      function updateVoices() {
+        const engine = document.getElementById("ttsEngine").value;
+        const voiceSel = document.getElementById("ttsVoice");
+        const keyInput = document.getElementById("ttsApiKey");
+        const customSel = document.getElementById("customVoiceFile");
+        voiceSel.innerHTML = "";
+        if (engine === "edge") {
+          voiceSel.innerHTML =
+            '<option value="vi-VN-HoaiMyNeural">Hoài My - Nữ</option><option value="vi-VN-NamMinhNeural">Nam Minh - Nam</option>';
+          keyInput.style.display = "none";
+          customSel.style.display = "none";
+        } else if (engine === "openai") {
+          voiceSel.innerHTML =
+            '<option value="nova">Nova - Nữ</option><option value="onyx">Onyx - Nam</option>';
+          keyInput.style.display = "block";
+          customSel.style.display = "none";
+        } else if (engine === "coqui") {
+          voiceSel.innerHTML = '<option value="vi">Tiếng Việt</option>';
+          keyInput.style.display = "none";
+          customSel.style.display = "block";
+        } else if (engine === "piper") {
+          voiceSel.innerHTML =
+            '<option value="vi_VN-vais1000-medium">Vais1000 - Nữ</option><option value="vi_VN-25hours-single-medium">25hours - Nam</option>';
+          keyInput.style.display = "none";
+          customSel.style.display = "none";
+        }
+      }
+
+      async function mergeVideos() {
+        const urls = document
+          .getElementById("urls")
+          .value.split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (urls.length === 0) {
+          alert("Nhập link");
+          return;
+        }
+        const btn = document.getElementById("mergeBtn");
+        btn.disabled = true;
+        btn.textContent = "⏳ Đang tải...";
+        const log = document.getElementById("mergeLog");
+        log.style.display = "block";
+        log.textContent = "Bắt đầu...\n";
+        const payload = {
+          urls: urls,
+          model: document.getElementById("whisperModel").value,
+          translate_targets: document
+            .getElementById("translateTarget")
+            .value.split(","),
+          translator_engine: document.getElementById("translatorEngine").value,
+          api_key: document.getElementById("translatorApiKey").value,
+          auto_gender: true,
+        };
+        try {
+          const res = await fetch(API_BASE + "/api/merge", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          lastMergeData = data;
+          log.textContent += JSON.stringify(data, null, 2);
+          const resultDiv = document.getElementById("mergeResult");
+          resultDiv.innerHTML = `<div class="result-item">📁 Job ID: <b>${data.job_id}</b> - ${data.job_dir}</div>`;
+          if (data.final_file)
+            resultDiv.innerHTML += `<div class="result-item">✅ Video: ${data.final_file} <a href="${data.final_file}" target="_blank">Mở</a></div>`;
+          if (data.srt_zh)
+            resultDiv.innerHTML += `<div class="result-item">📝 Sub ZH: ${data.srt_zh} <a href="${data.srt_zh}" target="_blank">Tải</a></div>`;
+          if (data.translations) {
+            Object.keys(data.translations).forEach((lang) => {
+              const t = data.translations[lang];
+              if (t.srt)
+                resultDiv.innerHTML += `<div class="result-item">🌐 Sub ${lang} [${t.engine}]: ${t.srt} <a href="${t.srt}" target="_blank">Tải</a></div>`;
+              if (t.txt) {
+                resultDiv.innerHTML += `<div class="result-item">📄 Text ${lang}: ${t.txt} <a href="${t.txt}" target="_blank">Tải</a></div>`;
+                if (lang === "vi") lastMergeData.txt_vi = t.txt;
+              }
+            });
+          }
+          if (data.files_in_job)
+            resultDiv.innerHTML += `<div class="small">Files: ${data.files_in_job.join(", ")}</div>`;
+          document.getElementById("ttsCard").style.display = "block";
+          document.getElementById("finalCard").style.display = "block";
+        } catch (e) {
+          log.textContent += "\n❌ " + e.message;
+        }
+        btn.disabled = false;
+        btn.textContent = "🚀 Merge + Gen Sub + Dịch";
+      }
+
+      async function makeTTS() {
+        let txtFile =
+          lastMergeData?.txt_vi ||
+          lastMergeData?.translations?.vi?.txt ||
+          lastMergeData?.txt_zh;
+        if (!txtFile) return alert("Chưa có txt");
+        const payload = {
+          txt_file: txtFile,
+          tts_engine: document.getElementById("ttsEngine").value,
+          voice: document.getElementById("ttsVoice").value,
+          tts_api_key: document.getElementById("ttsApiKey").value,
+          custom_voice_file: document.getElementById("customVoiceFile").value,
+          tts_lang: "vi",
+        };
+        const resDiv = document.getElementById("ttsResult");
+        resDiv.innerHTML = "⏳ Đang tạo...";
+        const res = await fetch(API_BASE + "/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        resDiv.innerHTML = data.error
+          ? `<span style="color:red">${data.error}</span>`
+          : `<div class="result-item">🔊 Audio: ${data.audio} <a href="${data.audio}" target="_blank">Nghe</a></div>`;
+        lastMergeData.last_audio = data.audio;
+      }
+      async function burnSub() {
+        const srt = prompt(
+          "Nhập SRT:",
+          lastMergeData?.translations?.vi?.srt || lastMergeData?.srt_zh,
+        );
+        const res = await fetch(API_BASE + "/api/burn", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            file: lastMergeData.final_file,
+            srt_file: srt,
+          }),
+        });
+        const data = await res.json();
+        document.getElementById("finalResult").innerHTML = data.burned_file
+          ? `<div class="result-item">🔥 ${data.burned_file} <a href="${data.burned_file}" target="_blank">Tải</a></div>`
+          : data.error;
+      }
+      async function dubVideo() {
+        const res = await fetch(API_BASE + "/api/dub", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            file: lastMergeData.final_file,
+            audio_file: lastMergeData.last_audio,
+          }),
+        });
+        const data = await res.json();
+        document.getElementById("finalResult").innerHTML = data.dubbed_file
+          ? `<div class="result-item">🎬 ${data.dubbed_file} <a href="${data.dubbed_file}" target="_blank">Tải</a></div>`
+          : data.error;
+      }
+      updateVoices();
+    </script>
+  </body>
+</html>
