@@ -313,7 +313,9 @@ async def merge(data: dict):
         result["txt_zh"]=f"/downloads/{job_id}/{os.path.basename(txt_path)}"
         result["used_model"]=used
         result["translations"]={}
+        print(f"====== translate_targets:: {translate_targets}")
         for target in translate_targets:
+            print(f"====== target:: {target}")
             if target=="zh": continue
             try:
                 print(f"[MAIN] Translating to {target} with engine {translator_engine}")
@@ -366,8 +368,10 @@ async def api_translate_srt(data: dict):
     print(f"[TRANSLATE-API] {real_path} -> {target} via {engine}, job={job_id}")
 
     try:
-        fn = get_translator_fn(engine, target, api_key=api_key)
-        out_srt, out_txt = _translate_blocks(real_path, fn, target)
+        # fn = get_translator_fn(engine, target, api_key=api_key)
+        # out_srt, out_txt = _translate_blocks(real_path, fn, target)
+        fn = get_translator_fn(translator_engine, target, api_key=api_key)
+        out_srt, out_txt = _translate_blocks(srt_path, fn, target, fallback_engine="qwen", api_key=api_key)
 
         # Trả về đường dẫn đúng job_id
         if job_id:

@@ -2,7 +2,7 @@ fastapi
 uvicorn
 yt-dlp
 python-multipart
-faster-whisper
+faster-whisper #Win
 psutil
 deep-translator
 openai
@@ -19,3 +19,4 @@ google-auth-oauthlib
 google-auth
 imageio-ffmpeg
 ffmpeg-python
+mlx-whisper
