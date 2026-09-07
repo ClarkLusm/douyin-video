@@ -6,6 +6,8 @@ import subprocess, os, uuid, shlex, shutil, json, traceback, re
 import yt_dlp
 from subtitle import video_to_subs, auto_model, get_ram, _translate_blocks, get_translator_fn, tts_edge, tts_openai, tts_coqui, tts_piper, get_tts_options, ensure_default_voices, detect_gender_from_video, DEFAULT_FEMALE, DEFAULT_MALE, DEFAULT_VOICE, VOICE_DIR
 from ffmpeg_helper import get_ffmpeg_path, check_ffmpeg, run_ffmpeg
+from pathlib import Path
+from datetime import datetime
 
 try:
     from youtube_uploader import upload_video as yt_upload, check_auth as yt_check_auth, save_client_secret_from_json
@@ -22,6 +24,9 @@ os.makedirs(VOICE_DIR,exist_ok=True)
 FRONTEND_DIR=os.path.join(os.path.dirname(BASE_DIR),"frontend")
 META_FILE=os.path.join(VOICE_DIR,"voices.json")
 CONFIG_FILE=os.path.join(BASE_DIR,"config.json")
+
+DOWNLOADS_DIR = Path(DOWNLOAD_DIR)
+DOWNLOADS_DIR.mkdir(exist_ok=True)
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
@@ -107,15 +112,13 @@ def dl_single_video(url, idx, job_dir=None):
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4/best',
         'merge_output_format': 'mp4',
         'quiet': True, 'noplaylist': True, 'no_warnings': True,
+        'nocheckcertificate': True,
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         'referer': 'https://www.douyin.com/',
         'headers': {'Referer': 'https://www.douyin.com/'},
     }
-    if cookies_file:
+    if cookies_file and os.path.exists(cookies_file):
         ydl_opts['cookiefile'] = cookies_file
-    else:
-        try: ydl_opts['cookiesfrombrowser'] = ('chrome',)
-        except: pass
 
     urls_to_try = [norm_url]
     if extracted_id:
@@ -144,15 +147,53 @@ def dl_single_video(url, idx, job_dir=None):
 
     return {"success": False, "url": original_url, "idx": idx, "file": None, "error": last_error, "trace": traceback.format_exc()[-800:], "extracted_id": extracted_id}
 
+def get_video_wh(fpath):
+    try:
+        ffprobe = get_ffmpeg_path().replace("ffmpeg", "ffprobe")
+        cmd = [ffprobe, "-v", "error", "-select_streams", "v:0",
+               "-show_entries", "stream=width,height", "-of", "json", fpath]
+        out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode()
+        info = json.loads(out)
+        w = int(info['streams'][0]['width'])
+        h = int(info['streams'][0]['height'])
+        return w, h
+    except:
+        return 1920, 1080
+
 def normalize(files, job_dir=None):
     out=[]
     ffmpeg_path=get_ffmpeg_path()
     dl_dir = job_dir if job_dir else DOWNLOAD_DIR
-    for fpath in files:
+
+    # 1. CHECK 1 LƯỢT LẤY MIN SCALE
+    sizes = []
+    for f in files:
+        w, h = get_video_wh(f)
+        sizes.append((w, h))
+        print(f"[CHECK] {os.path.basename(f)}: {w}x{h}")
+
+    # lấy video có diện tích nhỏ nhất làm chuẩn -> tránh upscale
+    min_idx = min(range(len(sizes)), key=lambda i: sizes[i][0]*sizes[i][1])
+    target_w, target_h = sizes[min_idx]
+    target_w = (target_w // 2) * 2
+    target_h = (target_h // 2) * 2
+    print(f"[NORM] Target chung: {target_w}x{target_h} (lấy từ file nhỏ nhất)")
+
+    # 2. NORMALIZE TẤT CẢ VỀ TARGET CHUNG
+    for i, fpath in enumerate(files):
         base_name=os.path.basename(fpath)
         name_without_ext=os.path.splitext(base_name)[0]
         o=os.path.join(dl_dir, f"{name_without_ext}_norm.mp4")
-        cmd=[ffmpeg_path,"-y","-i",fpath,"-vf","scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2:color=black","-c:v","libx264","-preset","fast","-crf","23","-c:a","aac","-r","30",o]
+
+        w, h = sizes[i]
+        # nếu file này đã bằng target thì chỉ fix chẵn pixel, không scale
+        if w == target_w and h == target_h:
+            vf = "scale=trunc(iw/2)*2:trunc(ih/2)*2"
+        else:
+            # file to hơn -> hạ xuống target, file nhỏ hơn -> giữ nguyên + pad đen
+            vf = f"scale={target_w}:{target_h}:force_original_aspect_ratio=decrease,pad={target_w}:{target_h}:(ow-iw)/2:(oh-ih)/2:color=black"
+
+        cmd=[ffmpeg_path,"-y","-i",fpath,"-vf",vf,"-c:v","libx264","-preset","fast","-crf","18","-c:a","aac","-r","30",o]
         subprocess.run(cmd, check=False)
         out.append(o if os.path.exists(o) else fpath)
     return out
@@ -174,6 +215,27 @@ def dub_video(video_path, audio_path):
     cmd=[ffmpeg_path,"-y","-i",video_path,"-i",audio_path,"-c:v","copy","-map","0:v:0","-map","1:a:0","-shortest",out]
     subprocess.run(cmd, check=False)
     return out
+
+def get_folder_info(folder_path: Path):
+    files = list(folder_path.glob("*"))
+    mp4_files = list(folder_path.glob("*.mp4"))
+    srt_files = list(folder_path.glob("*.srt"))
+    total_size = sum(f.stat().st_size for f in files if f.is_file())
+    return {
+        "id": folder_path.name,
+        "name": folder_path.name,
+        "created": datetime.fromtimestamp(folder_path.stat().st_mtime).strftime("%Y-%m-%d %H:%M"),
+        "file_count": len(files),
+        "total_size_mb": round(total_size / (1024*1024), 2),
+        "total_size_str": f"{round(total_size/(1024*1024),1)} MB",
+        "has_zh": any("zh.srt" in f.name for f in srt_files),
+        "has_vi": any("vi.srt" in f.name for f in srt_files),
+        "has_dubbed": any("dubbed" in f.name for f in mp4_files),
+        "has_burned": any("burned" in f.name for f in mp4_files),
+        "has_final": any("final" in f.name for f in mp4_files),
+        "mp4_count": len(mp4_files),
+        "srt_count": len(srt_files),
+    }
 
 @app.get("/api/system")
 async def sysinfo():
@@ -238,6 +300,15 @@ async def upload_voice(file: UploadFile = File(...), name: str = Form(""), gende
     save_meta(meta)
     return {"filename": filename, "library": meta}
 
+def safe_folder_name(name: str):
+    name = name.strip()
+    if not name:
+        return None
+    # bỏ ký tự cấm của Windows
+    name = re.sub(r'[\\/:*?"<>|]+', '', name)
+    name = re.sub(r'\s+', '_', name)
+    return name[:80]
+
 @app.post("/api/merge")
 async def merge(data: dict):
     urls=[u.strip() for u in data.get("urls",[]) if u.strip()]
@@ -246,14 +317,35 @@ async def merge(data: dict):
     translator_engine=data.get("translator_engine","google")
     api_key=data.get("api_key",None)
     auto_gender=data.get("auto_gender", True)
+    raw_title = data.get("title","").strip() # <-- LẤY TITLE TỪ FRONTEND
+
     if not urls:
         return {"error":"no urls", "download_results": []}
 
-    # Tạo thư mục riêng cho job này
-    job_id=str(uuid.uuid4())[:8]
-    job_dir=os.path.join(DOWNLOAD_DIR, job_id)
+    # Tạo thư mục theo title, nếu không có title thì fallback uuid như cũ
+    safe_title = safe_folder_name(raw_title)
+    if safe_title:
+        base_dir_name = safe_title
+    else:
+        base_dir_name = str(uuid.uuid4())[:8]
+
+    # chống trùng folder
+    job_id = base_dir_name
+    job_dir = os.path.join(DOWNLOAD_DIR, job_id)
+    counter = 1
+    while os.path.exists(job_dir):
+        job_id = f"{base_dir_name}_{counter}"
+        job_dir = os.path.join(DOWNLOAD_DIR, job_id)
+        counter += 1
+
     os.makedirs(job_dir, exist_ok=True)
-    print(f"[JOB {job_id}] Created job dir: {job_dir}")
+    print(f"[JOB {job_id}] Title: {raw_title} -> dir: {job_dir}")
+
+    # lưu metadata để sau này up Youtube dùng luôn
+    try:
+        with open(os.path.join(job_dir, "metadata.json"), "w", encoding="utf-8") as f:
+            json.dump({"title": raw_title, "safe_title": job_id, "urls": urls}, f, ensure_ascii=False, indent=2)
+    except: pass
 
     download_results=[]
     successful_files=[]
@@ -271,7 +363,8 @@ async def merge(data: dict):
             "download_results": download_results,
             "failed_count": len(failed), "succeeded_count": len(succeeded),
             "should_merge": False, "final_file": None,
-            "job_id": job_id, "job_dir": f"/downloads/{job_id}/"
+            "job_id": job_id, "job_dir": f"/downloads/{job_id}/",
+            "title": raw_title
         }
 
     norm=normalize(successful_files, job_dir=job_dir)
@@ -289,6 +382,7 @@ async def merge(data: dict):
 
     result={
         "job_id": job_id,
+        "title": raw_title, # trả về để frontend hiển thị
         "job_dir": f"/downloads/{job_id}/",
         "job_dir_path": job_dir,
         "final_file":f"/downloads/{job_id}/final_{job_id}.mp4",
@@ -306,33 +400,25 @@ async def merge(data: dict):
         except Exception as e:
             result["gender_error"]=str(e)
 
-    # FIX BUG: lang chứ không phải language
     try:
         srt_path,txt_path,_,used=video_to_subs(output, lang="zh", model_name=model_name)
         result["srt_zh"]=f"/downloads/{job_id}/{os.path.basename(srt_path)}"
         result["txt_zh"]=f"/downloads/{job_id}/{os.path.basename(txt_path)}"
         result["used_model"]=used
         result["translations"]={}
-        print(f"====== translate_targets:: {translate_targets}")
         for target in translate_targets:
-            print(f"====== target:: {target}")
             if target=="zh": continue
             try:
-                print(f"[MAIN] Translating to {target} with engine {translator_engine}")
                 fn=get_translator_fn(translator_engine, target, api_key=api_key)
                 out_srt,out_txt=_translate_blocks(srt_path, fn, target)
                 result["translations"][target]={"srt":f"/downloads/{job_id}/{os.path.basename(out_srt)}","txt":f"/downloads/{job_id}/{os.path.basename(out_txt)}","txt_path":out_txt,"engine":translator_engine}
-                print(f"[MAIN] Translation {target} OK: {out_srt}")
             except Exception as e:
-                import traceback; traceback.print_exc()
-                print(f"[MAIN] Translation {target} FAILED: {e}")
-                result["translations"][target]={"error":str(e), "trace": traceback.format_exc()[-1000:]}
+                import traceback
+                result["translations"][target]={"error":str(e)}
         result["files_in_job"]=os.listdir(job_dir)
     except Exception as e:
         import traceback
-        traceback.print_exc()
         result["sub_error"]=str(e)
-        result["sub_trace"]=traceback.format_exc()[-1000:]
 
     return result
 
@@ -479,6 +565,43 @@ async def fe():
     idx=os.path.join(FRONTEND_DIR,"index.html")
     if os.path.exists(idx): return FileResponse(idx)
     return {"ok":True}
+
+@app.get("/api/videos/list")
+async def list_videos():
+    if not DOWNLOADS_DIR.exists():
+        return {"folders": []}
+    folders = [get_folder_info(p) for p in DOWNLOADS_DIR.iterdir() if p.is_dir()]
+    folders.sort(key=lambda x: x["created"], reverse=True)
+    return {"folders": folders, "total": len(folders)}
+
+@app.get("/api/videos/{folder_id}")
+async def get_video_detail(folder_id: str):
+    folder_path = DOWNLOADS_DIR / folder_id
+    if not folder_path.exists():
+        return {"error": "Folder not found"}
+    files = []
+    for f in folder_path.iterdir():
+        if f.is_file():
+            files.append({
+                "name": f.name,
+                "size_mb": round(f.stat().st_size / (1024*1024), 2),
+                "ext": f.suffix,
+                "is_video": f.suffix == ".mp4",
+                "is_srt": f.suffix == ".srt",
+                "modified": datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+            })
+    files.sort(key=lambda x: (0 if x["is_video"] else 1, x["name"]))
+    info = get_folder_info(folder_path)
+    info["files"] = files
+    return info
+
+@app.delete("/api/videos/{folder_id}")
+async def delete_video_folder(folder_id: str):
+    folder_path = DOWNLOADS_DIR / folder_id
+    if not folder_path.exists():
+        return {"success": False, "error": "Not found"}
+    shutil.rmtree(folder_path)
+    return {"success": True}
 
 app.mount("/downloads", StaticFiles(directory=DOWNLOAD_DIR), name="downloads")
 app.mount("/voices", StaticFiles(directory=VOICE_DIR), name="voices")

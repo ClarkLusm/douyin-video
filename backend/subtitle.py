@@ -3,7 +3,10 @@ from faster_whisper import WhisperModel
 from deep_translator.exceptions import TranslationNotFound
 import os, platform, subprocess, shutil, psutil
 import numpy as np
-import mlx_whisper
+try:
+    import mlx_whisper
+except ImportError:
+    mlx_whisper = None
 
 _model=None; _current=None
 def get_ram(): 
@@ -60,7 +63,7 @@ def video_to_subs(vid, lang="zh", model_name=None):
     txt = base + f".{used}.zh.txt"
 
     # ===== MAC M1/M2/M3 -> dùng mlx-whisper (nhanh x10) =====
-    if system == "Darwin" and machine in ["arm64", "aarch64"]:
+    if system == "Darwin" and machine in ["arm64", "aarch64"] and mlx_whisper is not None:
         try:
             import mlx_whisper
             from ffmpeg_helper import get_ffmpeg_path

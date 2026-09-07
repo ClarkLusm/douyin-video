@@ -29,7 +29,11 @@ Cài ffmpeg:
 unzip -o douyin-video-v10.2.zip -d .
 cd douyin-video
 # Hoặc nếu bạn giải nén ra thư mục douyin-video/
-cd backend
+cd backendz
+
+py -3.11 -m venv venv
+
+source venv/Scripts/activate
 ```
 
 ### 3. Cài thư viện
@@ -46,7 +50,7 @@ pip install coqui-tts
 ### 4. Chạy server
 ```bash
 cd backend
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload --workers 2
 ```
 Hoặc:
 ```bash
