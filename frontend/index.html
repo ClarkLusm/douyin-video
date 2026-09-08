@@ -1,386 +1,527 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Douyin Tool v10.6 - Full UI Unminified</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-body{font-family:'Inter',sans-serif;background:#0a0a0a;color:#e5e5e5}
-.grad-text{background:linear-gradient(90deg,#ff0050,#ff7a00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.card{background:#141414;border:1px solid #222;border-radius:12px;padding:20px;margin-bottom:16px}
-.tab-bar{background:#141414;border:1px solid #222;border-radius:12px 12px 0 0;display:flex;overflow:hidden}
-.tab-btn{flex:1;padding:12px 16px;font-size:14px;font-weight:600;background:transparent;border:none;border-bottom:2px solid transparent;color:#888;cursor:pointer}
-.tab-btn.active{color:#fff;border-bottom-color:#ff0050;background:#1a1a1a}
-.folder-card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:14px;cursor:pointer;transition:0.2s}
-.folder-card:hover{border-color:#ff0050;transform:translateY(-1px)}
-.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-@media(max-width:640px){.video-grid{grid-template-columns:1fr}}
-::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#333;border-radius:4px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Douyin Tool v10.6 - Full UI Unminified</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5
+    }
+
+    .grad-text {
+      background: linear-gradient(90deg, #ff0050, #ff7a00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px
+    }
+
+    .tab-bar {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      overflow: hidden
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #888;
+      cursor: pointer
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      border-bottom-color: #ff0050;
+      background: #1a1a1a
+    }
+
+    .folder-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      transition: 0.2s
+    }
+
+    .folder-card:hover {
+      border-color: #ff0050;
+      transform: translateY(-1px)
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px
+    }
+
+    @media(max-width:640px) {
+      .video-grid {
+        grid-template-columns: 1fr
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 4px
+    }
+  </style>
 </head>
+
 <body>
-<div id="root"></div>
-<script type="module">
-import React, {useState, useEffect, useRef} from "https://esm.sh/react@18.3.1";
-import ReactDOM from "https://esm.sh/react-dom@18.3.1/client";
-const API="";
+  <div id="root"></div>
+  <script type="module">
+    import React, { useState, useEffect, useRef } from "https://esm.sh/react@18.3.1";
+    import ReactDOM from "https://esm.sh/react-dom@18.3.1/client";
+    const API = "";
 
-function App(){
-  // Tab
-  const [tab,setTab]=useState("merge");
-  // === TITLE MỚI ===
-  const [title,setTitle]=useState("");
-  const [urls,setUrls]=useState("");
-  const [model,setModel]=useState("medium");
-  const [engine,setEngine]=useState("google");
-  const [apiKey,setApiKey]=useState("");
-  const [translate,setTranslate]=useState("vi");
-  const [ttsEngine,setTtsEngine]=useState("edge");
-  const [voice,setVoice]=useState("vi-VN-HoaiMyNeural");
-  const [ttsKey,setTtsKey]=useState("");
-  const [customVoice,setCustomVoice]=useState("");
-  const [merging,setMerging]=useState(false);
-  const [log,setLog]=useState("");
-  const [results,setResults]=useState([]);
-  const [lastData,setLastData]=useState(null);
-  const [ttsResult,setTtsResult]=useState("");
-  const [burnResult,setBurnResult]=useState("");
-  // Manager
-  const [folders,setFolders]=useState([]);
-  const [loadingFolders,setLoadingFolders]=useState(false);
-  const [search,setSearch]=useState("");
-  const [selected,setSelected]=useState(null);
-  const [loadingDetail,setLoadingDetail]=useState(false);
-  const logRef=useRef(null);
+    function App() {
+      // Tab
+      const [tab, setTab] = useState("merge");
+      // === TITLE MỚI ===
+      const [title, setTitle] = useState("");
+      const [urls, setUrls] = useState("");
+      const [model, setModel] = useState("medium");
+      const [engine, setEngine] = useState("google");
+      const [apiKey, setApiKey] = useState("");
+      const [translate, setTranslate] = useState("vi");
+      const [ttsEngine, setTtsEngine] = useState("edge");
+      const [voice, setVoice] = useState("vi-VN-HoaiMyNeural");
+      const [ttsKey, setTtsKey] = useState("");
+      const [customVoice, setCustomVoice] = useState("");
+      const [merging, setMerging] = useState(false);
+      const [log, setLog] = useState("");
+      const [results, setResults] = useState([]);
+      const [lastData, setLastData] = useState(null);
+      const [ttsResult, setTtsResult] = useState("");
+      const [burnResult, setBurnResult] = useState("");
+      // Manager
+      const [folders, setFolders] = useState([]);
+      const [loadingFolders, setLoadingFolders] = useState(false);
+      const [search, setSearch] = useState("");
+      const [selected, setSelected] = useState(null);
+      const [loadingDetail, setLoadingDetail] = useState(false);
+      const [previewFile, setPreviewFile] = useState(null);
+      const [creatingSub, setCreatingSub] = useState(false);
+      const logRef = useRef(null);
 
-  const voices={
-    edge:[{value:"vi-VN-HoaiMyNeural",label:"Hoài My - Nữ"},{value:"vi-VN-NamMinhNeural",label:"Nam Minh - Nam"}],
-    openai:[{value:"nova",label:"Nova - Nữ"},{value:"onyx",label:"Onyx - Nam"}],
-    coqui:[{value:"vi",label:"Tiếng Việt"}],
-    piper:[{value:"vi_VN-vais1000-medium",label:"Vais1000 - Nữ"},{value:"vi_VN-25hours-single-medium",label:"25hours - Nam"}]
-  };
+      const voices = {
+        edge: [{ value: "vi-VN-HoaiMyNeural", label: "Hoài My - Nữ" }, { value: "vi-VN-NamMinhNeural", label: "Nam Minh - Nam" }],
+        openai: [{ value: "nova", label: "Nova - Nữ" }, { value: "onyx", label: "Onyx - Nam" }],
+        coqui: [{ value: "vi", label: "Tiếng Việt" }],
+        piper: [{ value: "vi_VN-vais1000-medium", label: "Vais1000 - Nữ" }, { value: "vi_VN-25hours-single-medium", label: "25hours - Nam" }]
+      };
 
-  useEffect(()=>{if(logRef.current) logRef.current.scrollTop=logRef.current.scrollHeight},[log]);
-  useEffect(()=>{if(tab==="manager") loadFolders()},[tab]);
-  useEffect(()=>{
-    const list=voices[ttsEngine]||[];
-    if(list.length &&!list.find(v=>v.value===voice)) setVoice(list[0].value);
-  },[ttsEngine]);
+      useEffect(() => { if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight }, [log]);
+      useEffect(() => { if (tab === "manager") loadFolders() }, [tab]);
+      useEffect(() => {
+        const list = voices[ttsEngine] || [];
+        if (list.length && !list.find(v => v.value === voice)) setVoice(list[0].value);
+      }, [ttsEngine]);
 
-  const loadFolders=async()=>{
-    setLoadingFolders(true);
-    try{
-      const r=await fetch(API+"/api/videos/list");
-      const d=await r.json();
-      const arr=Array.isArray(d)?d:d.folders||[];
-      setFolders(arr);
-    }catch(e){setFolders([])}
-    setLoadingFolders(false);
-  };
+      const loadFolders = async () => {
+        setLoadingFolders(true);
+        try {
+          const r = await fetch(API + "/api/videos/list");
+          const d = await r.json();
+          const arr = Array.isArray(d) ? d : d.folders || [];
+          setFolders(arr);
+        } catch (e) { setFolders([]) }
+        setLoadingFolders(false);
+      };
 
-  const loadDetail=async(jobId)=>{
-    setLoadingDetail(true);setSelected(null);
-    try{
-      const r=await fetch(API+`/api/videos/${encodeURIComponent(jobId)}`);
-      const d=await r.json();
-      setSelected(d);
-      setLastData(prev=>({...prev||{},job_id:d.job_id||jobId,final_file:d.final_file||d.final_mp4, srt_zh:d.srt_zh, translations:d.translations||prev?.translations}));
-    }catch(e){setSelected({job_id:jobId,error:"Không tải được chi tiết: "+e.message})}
-    setLoadingDetail(false);
-  };
+      const loadDetail = async (jobId) => {
+        setLoadingDetail(true); setSelected(null); setPreviewFile(null);
+        try {
+          const r = await fetch(API + `/api/videos/${encodeURIComponent(jobId)}`);
+          const d = await r.json();
+          setSelected(d);
+          const mp4 = d.final_file || d.final_mp4 || "";
+          if (mp4) {
+            const src = mp4.startsWith("/") ? mp4 : `/api/videos/${encodeURIComponent(jobId)}/file/${encodeURIComponent(mp4.split("/").pop() || mp4)}`;
+            setPreviewFile({ name: mp4.split("/").pop() || "final.mp4", url: src });
+          }
+          setLastData(prev => ({ ...prev || {}, job_id: d.job_id || jobId, final_file: d.final_file || d.final_mp4, srt_zh: d.srt_zh, translations: d.translations || prev?.translations }));
+        } catch (e) { setSelected({ job_id: jobId, error: "Không tải được chi tiết: " + e.message }) }
+        setLoadingDetail(false);
+      };
 
-  const handleMerge=async()=>{
-    if(!title.trim()){alert("Nhập Title đi - sẽ làm tên folder & title Youtube luôn");return;}
-    const list=urls.split("\n").map(s=>s.trim()).filter(Boolean);
-    if(!list.length){setLog(l=>l+"\n⚠ Vui lòng nhập ít nhất 1 link Douyin\n");return;}
-    setMerging(true);setLog("Bắt đầu...\n");setResults([]);setTtsResult("");setBurnResult("");
-    const payload={title:title.trim(),urls:list,model,translate_targets:translate.split(",").map(s=>s.trim()),translator_engine:engine,api_key:apiKey,auto_gender:true};
-    try{
-      const r=await fetch(API+"/api/merge",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-      const data=await r.json();
-      setLastData(data);setLog(l=>l+JSON.stringify(data,null,2));
-      const res=[];
-      res.push({html:`📁 Job ID: ${data.job_id} - ${data.job_dir||""}`});
-      res.push({html:`📝 Title: ${data.title||title} (folder: ${data.job_id})`});
-      if(data.final_file) res.push({html:`✅ Video: ${data.final_file}`,link:data.final_file});
-      if(data.srt_zh) res.push({html:`📝 Sub ZH: ${data.srt_zh}`,link:data.srt_zh});
-      if(data.translations) Object.keys(data.translations).forEach(k=>{
-        const f=data.translations[k];
-        if(f.srt) res.push({html:`🌐 Sub ${k.toUpperCase()} [${f.engine||engine}]: ${f.srt}`,link:f.srt});
-        if(f.txt) res.push({html:`📄 Text ${k.toUpperCase()}: ${f.txt}`,link:f.txt});
-      });
-      setResults(res);
-    }catch(e){setLog(l=>l+"\n❌ "+e.message)}
-    setMerging(false);
-  };
+      const handleMerge = async () => {
+        if (!title.trim()) { alert("Nhập Title đi - sẽ làm tên folder & title Youtube luôn"); return; }
+        const list = urls.split("\n").map(s => s.trim()).filter(Boolean);
+        if (!list.length) { setLog(l => l + "\n⚠ Vui lòng nhập ít nhất 1 link Douyin\n"); return; }
+        setMerging(true); setLog("Bắt đầu...\n"); setResults([]); setTtsResult(""); setBurnResult("");
+        const payload = { title: title.trim(), urls: list, model, translate_targets: translate.split(",").map(s => s.trim()), translator_engine: engine, api_key: apiKey, auto_gender: true };
+        try {
+          const r = await fetch(API + "/api/merge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+          const data = await r.json();
+          setLastData(data); setLog(l => l + JSON.stringify(data, null, 2));
+          const res = [];
+          res.push({ html: `📁 Job ID: ${data.job_id} - ${data.job_dir || ""}` });
+          res.push({ html: `📝 Title: ${data.title || title} (folder: ${data.job_id})` });
+          if (data.final_file) res.push({ html: `✅ Video: ${data.final_file}`, link: data.final_file });
+          if (data.srt_zh) res.push({ html: `📝 Sub ZH: ${data.srt_zh}`, link: data.srt_zh });
+          if (data.translations) Object.keys(data.translations).forEach(k => {
+            const f = data.translations[k];
+            if (f.srt) res.push({ html: `🌐 Sub ${k.toUpperCase()} [${f.engine || engine}]: ${f.srt}`, link: f.srt });
+            if (f.txt) res.push({ html: `📄 Text ${k.toUpperCase()}: ${f.txt}`, link: f.txt });
+          });
+          setResults(res);
+        } catch (e) { setLog(l => l + "\n❌ " + e.message) }
+        setMerging(false);
+      };
 
-  const handleTranslate=async(srtFile,target,jobId)=>{
-    if(engine!=="google" &&!apiKey){alert(`Engine ${engine} cần API Key`);return;}
-    setLog(l=>l+`\n[FRONTEND] Đang dịch ${srtFile} -> ${target} via ${engine}...\n`);
-    try{
-      const r=await fetch(API+"/api/translate-srt",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({srt_file:srtFile,target,engine,api_key:apiKey,job_id:jobId||lastData?.job_id||selected?.job_id})});
-      const d=await r.json();
-      setLog(l=>l+JSON.stringify(d,null,2)+"\n");
-      if(d.srt) setResults(prev=>[...prev,{html:`🌐 Sub ${d.target?.toUpperCase()} [${d.engine}]: ${d.srt}`,link:d.srt}]);
-      if(jobId) loadDetail(jobId);
-    }catch(e){setLog(l=>l+"❌ "+e.message+"\n")}
-  };
 
-  const handleTTS=async()=>{
-    const txtFile=lastData?.txt_vi||lastData?.translations?.vi?.txt||lastData?.txt_zh||selected?.translations?.vi?.txt||selected?.txt_vi;
-    if(!txtFile){alert("Chưa có file txt để tạo audio");return;}
-    setTtsResult("⏳ Đang tạo...");
-    try{
-      const r=await fetch(API+"/api/tts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({txt_file:txtFile,tts_engine:ttsEngine,voice,tts_api_key:ttsKey,custom_voice_file:customVoice,job_id:lastData?.job_id||selected?.job_id})});
-      const d=await r.json();
-      if(d.error) setTtsResult("❌ "+d.error);
-      else {setTtsResult(`🔊 Audio: ${d.audio}`); setLastData(prev=>({...prev||{},last_audio:d.audio})); if(selected) loadDetail(selected.job_id);}
-    }catch(e){setTtsResult("❌ "+e.message)}
-  };
 
-  const handleBurn=async(srtFile)=>{
-    const f=srtFile||prompt("Nhập SRT:", lastData?.translations?.vi?.srt||lastData?.srt_zh||selected?.translations?.vi?.srt||selected?.srt_zh||"");
-    if(!f) return;
-    const videoFile=lastData?.final_file||selected?.final_file||selected?.final_mp4;
-    if(!videoFile){alert("Chưa có file video");return;}
-    try{
-      const r=await fetch(API+"/api/burn",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({file:videoFile,srt_file:f,job_id:selected?.job_id||lastData?.job_id})});
-      const d=await r.json();
-      if(d.burned_file){setBurnResult(`🔥 Burned: ${d.burned_file}`); if(selected) loadDetail(selected.job_id);}
-      else setBurnResult(d.error||"Lỗi burn");
-    }catch(e){setBurnResult("❌ "+e.message)}
-  };
+      const handleTranslate = async (srtFile, target, jobId) => {
+        if (engine !== "google" && !apiKey) { alert(`Engine ${engine} cần API Key`); return; }
+        setLog(l => l + `\n[FRONTEND] Đang dịch ${srtFile} -> ${target} via ${engine}...\n`);
+        try {
+          const r = await fetch(API + "/api/translate-srt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ srt_file: srtFile, target, engine, api_key: apiKey, job_id: jobId || lastData?.job_id || getSelectedId() }) });
+          const d = await r.json();
+          setLog(l => l + JSON.stringify(d, null, 2) + "\n");
+          if (d.srt) setResults(prev => [...prev, { html: `🌐 Sub ${d.target?.toUpperCase()} [${d.engine}]: ${d.srt}`, link: d.srt }]);
+          if (jobId) loadDetail(jobId);
+        } catch (e) { setLog(l => l + "❌ " + e.message + "\n") }
+      };
 
-  const handleDub=async()=>{
-    const audio=lastData?.last_audio||selected?.last_audio||selected?.audio;
-    const video=lastData?.final_file||selected?.final_file||selected?.final_mp4;
-    if(!audio){alert("Chưa có audio - hãy tạo TTS trước");return;}
-    if(!video){alert("Chưa có video");return;}
-    try{
-      const r=await fetch(API+"/api/dub",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({file:video,audio_file:audio,job_id:selected?.job_id||lastData?.job_id})});
-      const d=await r.json();
-      if(d.dubbed_file){setBurnResult(`🎬 Dubbed: ${d.dubbed_file}`); if(selected) loadDetail(selected.job_id);}
-      else setBurnResult(d.error||"Lỗi dub");
-    }catch(e){setBurnResult("❌ "+e.message)}
-  };
+      const getSelectedId = () => {
+        // API lúc thì trả về id, lúc thì job_id
+        return selected?.job_id || selected?.id || lastData?.job_id || "";
+      };
+      const handleCreateSub = async () => {
+        if (!getSelectedId()) { alert("Chưa chọn video"); return; }
+        if (creatingSub) return;
+        setCreatingSub(true);
+        setLog(l => l + `\n[SUB] Đang tạo sub cho ${getSelectedId()} model=${model}...\n`);
+        try {
+          const r = await fetch(API + `/api/videos/${encodeURIComponent(getSelectedId())}/generate-sub`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model, lang: "zh" })
+          });
+          const d = await r.json();
+          setLog(l => l + JSON.stringify(d, null, 2) + "\n");
+          if (d.ok) {
+            alert("✅ Tạo sub xong: " + d.srt_zh);
+            loadDetail(getSelectedId());
+          } else {
+            alert("❌ Lỗi: " + (d.error || "unknown"));
+          }
+        } catch (e) { alert("Lỗi: " + e.message) }
+        setCreatingSub(false);
+      };
 
-  const handleDelete=async(jobId)=>{
-    if(!confirm(`Xóa folder ${jobId}? Không thể hoàn tác.`)) return;
-    try{
-      const r=await fetch(API+`/api/videos/${encodeURIComponent(jobId)}`,{method:"DELETE"});
-      if(r.ok){setSelected(null);loadFolders();}
-      else alert("Xóa thất bại");
-    }catch(e){alert("Lỗi xóa: "+e.message)}
-  };
+      const handleTTS = async () => {
+        const txtFile = lastData?.txt_vi || lastData?.translations?.vi?.txt || lastData?.txt_zh || selected?.translations?.vi?.txt || selected?.txt_vi;
+        if (!txtFile) { alert("Chưa có file txt để tạo audio"); return; }
+        setTtsResult("⏳ Đang tạo...");
+        try {
+          const r = await fetch(API + "/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ txt_file: txtFile, tts_engine: ttsEngine, voice, tts_api_key: ttsKey, custom_voice_file: customVoice, job_id: lastData?.job_id || getSelectedId() }) });
+          const d = await r.json();
+          if (d.error) setTtsResult("❌ " + d.error);
+          else { setTtsResult(`🔊 Audio: ${d.audio}`); setLastData(prev => ({ ...prev || {}, last_audio: d.audio })); if (selected) loadDetail(getSelectedId()); }
+        } catch (e) { setTtsResult("❌ " + e.message) }
+      };
 
-  const filtered=folders.filter(f=>!search || (f.id||f.name||"").toLowerCase().includes(search.toLowerCase()));
+      const handleBurn = async (srtFile) => {
+        const f = srtFile || prompt("Nhập SRT:", lastData?.translations?.vi?.srt || lastData?.srt_zh || selected?.translations?.vi?.srt || selected?.srt_zh || "");
+        if (!f) return;
+        const videoFile = lastData?.final_file || selected?.final_file || selected?.final_mp4;
+        if (!videoFile) { alert("Chưa có file video"); return; }
+        try {
+          const r = await fetch(API + "/api/burn", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ file: videoFile, srt_file: f, job_id: getSelectedId() || lastData?.job_id }) });
+          const d = await r.json();
+          if (d.burned_file) { setBurnResult(`🔥 Burned: ${d.burned_file}`); if (selected) loadDetail(getSelectedId()); }
+          else setBurnResult(d.error || "Lỗi burn");
+        } catch (e) { setBurnResult("❌ " + e.message) }
+      };
 
-  const Tag=({show,children,cls})=> show? React.createElement("span",{className:`inline-flex px-2 py-0.5 rounded text- border mr-1 ${cls}`},children) : null;
+      const handleDub = async () => {
+        const audio = lastData?.last_audio || selected?.last_audio || selected?.audio;
+        const video = lastData?.final_file || selected?.final_file || selected?.final_mp4;
+        if (!audio) { alert("Chưa có audio - hãy tạo TTS trước"); return; }
+        if (!video) { alert("Chưa có video"); return; }
+        try {
+          const r = await fetch(API + "/api/dub", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ file: video, audio_file: audio, job_id: getSelectedId() || lastData?.job_id }) });
+          const d = await r.json();
+          if (d.dubbed_file) { setBurnResult(`🎬 Dubbed: ${d.dubbed_file}`); if (selected) loadDetail(getSelectedId()); }
+          else setBurnResult(d.error || "Lỗi dub");
+        } catch (e) { setBurnResult("❌ " + e.message) }
+      };
 
-  return React.createElement("div",{className:"max-w- mx-auto px-5 py-5"},[
-    React.createElement("h1",{key:"title",className:"text- font-bold grad-text tracking-tight"},"Douyin Video Tool v10.6"),
-    React.createElement("p",{key:"sub",className:"text-[#888] text- mb-6"},`Mỗi lần Merge tạo thư mục riêng downloads/{title}/ • Hỗ trợ Piper + DeepL/GPT • Quản lý video thực tế qua API`),
+      const handleDelete = async (jobId) => {
+        if (!confirm(`Xóa folder ${jobId}? Không thể hoàn tác.`)) return;
+        try {
+          const r = await fetch(API + `/api/videos/${encodeURIComponent(jobId)}`, { method: "DELETE" });
+          if (r.ok) { setSelected(null); loadFolders(); }
+          else alert("Xóa thất bại");
+        } catch (e) { alert("Lỗi xóa: " + e.message) }
+      };
 
-    React.createElement("div",{key:"tabs",className:"tab-bar mb-0"},[
-      React.createElement("button",{key:"mergeTab",className:`tab-btn ${tab==="merge"?"active":""}`,onClick:()=>setTab("merge")},"🚀 Merge & TTS"),
-      React.createElement("button",{key:"managerTab",className:`tab-btn ${tab==="manager"?"active":""}`,onClick:()=>setTab("manager")},"📁 Quản lý Video")
-    ]),
+      const filtered = folders.filter(f => !search || (f.id || f.name || "").toLowerCase().includes(search.toLowerCase()));
 
-    tab==="merge" && React.createElement("div",{key:"mergeContent",className:"bg-[#141414] border border-t-0 border-[#222] rounded-b- p-4 pt-5"},[
-      // TITLE
-      React.createElement("div",{key:"titleCard",className:"card border-[#ff0050]/30 bg-[#ff0050]/5"},[
-        React.createElement("h3",{className:"text- font-semibold mb-3 text-white flex items-center gap-2"},"📝 Title / Tên Folder ",React.createElement("span",{className:"bg-[#ff0050] text-white text- px-2 py-0.5 rounded"},"MỚI = TÊN FOLDER")),
-        React.createElement("input",{value:title,onChange:e=>setTitle(e.target.value),placeholder:"vd: Review son Douyin 07-09 - sẽ làm tên folder",className:"w-full bg-[#1a1a1a] border border-[#333] focus:border-[#ff0050] rounded- p-3 text- outline-none"}),
-        React.createElement("div",{className:"text- text-[#888] mt-2"},`Backend sẽ tạo: downloads/${title||"{title}"}/final_${title||"{title}"}.mp4 + metadata.json chứa title để up Youtube`)
-      ]),
-      React.createElement("div",{key:"urlsCard",className:"card"},[
-        React.createElement("h3",{className:"text- font-semibold mb-3 text-white"},"1. Danh sách link Douyin"),
-        React.createElement("textarea",{value:urls,onChange:e=>setUrls(e.target.value),placeholder:"https://www.douyin.com/video/736...\nhttps://www.douyin.com/discover?modal_id=752...",className:"w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text- min-h- resize-y focus:outline-none focus:border-[#ff0050]"})
-      ]),
-      React.createElement("div",{key:"whisperCard",className:"card"},[
-        React.createElement("h3",{className:"text- font-semibold mb-3 text-white"},"2. Whisper & Dịch"),
-        React.createElement("div",{className:"grid grid-cols-1 sm:grid-cols-2 gap-3"},[
-          React.createElement("div",{},[
-            React.createElement("label",{className:"block text- text-[#aaa] mb-1 mt-1"},"Model Whisper"),
-            React.createElement("select",{value:model,onChange:e=>setModel(e.target.value),className:"w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-"},
-              [React.createElement("option",{value:"small"},"Small - Nhanh (500MB)"),React.createElement("option",{value:"medium"},"Medium - Chính xác (1.5GB)"),React.createElement("option",{value:"large-v3"},"Large v3 - Nhất (3GB)")]
-            )
+      const Tag = ({ show, children, cls }) => show ? React.createElement("span", { className: `inline-flex px-2 py-0.5 rounded text- border mr-1 ${cls}` }, children) : null;
+
+      return React.createElement("div", { className: "max-w- mx-auto px-5 py-5" }, [
+        React.createElement("h1", { key: "title", className: "text- font-bold grad-text tracking-tight" }, "Douyin Video Tool v10.6"),
+        React.createElement("p", { key: "sub", className: "text-[#888] text- mb-6" }, `Mỗi lần Merge tạo thư mục riêng downloads/{title}/ • Hỗ trợ Piper + DeepL/GPT • Quản lý video thực tế qua API`),
+
+        React.createElement("div", { key: "tabs", className: "tab-bar mb-0" }, [
+          React.createElement("button", { key: "mergeTab", className: `tab-btn ${tab === "merge" ? "active" : ""}`, onClick: () => setTab("merge") }, "🚀 Merge & TTS"),
+          React.createElement("button", { key: "managerTab", className: `tab-btn ${tab === "manager" ? "active" : ""}`, onClick: () => setTab("manager") }, "📁 Quản lý Video")
+        ]),
+
+        tab === "merge" && React.createElement("div", { key: "mergeContent", className: "bg-[#141414] border border-t-0 border-[#222] rounded-b- p-4 pt-5" }, [
+          // TITLE
+          React.createElement("div", { key: "titleCard", className: "card border-[#ff0050]/30 bg-[#ff0050]/5" }, [
+            React.createElement("h3", { className: "text- font-semibold mb-3 text-white flex items-center gap-2" }, "📝 Title / Tên Folder ", React.createElement("span", { className: "bg-[#ff0050] text-white text- px-2 py-0.5 rounded" }, "MỚI = TÊN FOLDER")),
+            React.createElement("input", { value: title, onChange: e => setTitle(e.target.value), placeholder: "vd: Review son Douyin 07-09 - sẽ làm tên folder", className: "w-full bg-[#1a1a1a] border border-[#333] focus:border-[#ff0050] rounded- p-3 text- outline-none" }),
+            React.createElement("div", { className: "text- text-[#888] mt-2" }, `Backend sẽ tạo: downloads/${title || "{title}"}/final_${title || "{title}"}.mp4 + metadata.json chứa title để up Youtube`)
           ]),
-          React.createElement("div",{},[
-            React.createElement("label",{className:"block text- text-[#aaa] mb-1 mt-1"},"Engine dịch"),
-            React.createElement("select",{value:engine,onChange:e=>setEngine(e.target.value),className:"w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-"},
-              [React.createElement("option",{value:"google"},"Google - Miễn phí"),React.createElement("option",{value:"deepl"},"DeepL - Chính xác nhất"),React.createElement("option",{value:"gpt"},"GPT-4o mini"),React.createElement("option",{value:"qwen"},"Qwen 2 (Groq)"),React.createElement("option",{value:"gemini"},"Gemini 1.5 Flash")]
-            )
-          ])
-        ]),
-        React.createElement("label",{className:"block text- text-[#aaa] mt-3 mb-1"},"API Key cho DeepL / GPT / Groq / Gemini"),
-        React.createElement("input",{type:"password",value:apiKey,onChange:e=>setApiKey(e.target.value),placeholder:"sk-..., groq_..., AIza...",className:"w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text- mt-1"}),
-        React.createElement("label",{className:"block text- text-[#aaa] mt-3 mb-1"},"Dịch sang"),
-        React.createElement("select",{value:translate,onChange:e=>setTranslate(e.target.value),className:"w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-"},
-          [React.createElement("option",{value:"vi"},"Tiếng Việt"),React.createElement("option",{value:"en"},"English"),React.createElement("option",{value:"vi,en"},"Cả Việt + Anh")]
-        )
-      ]),
-      React.createElement("div",{key:"ttsEngineCard",className:"card"},[
-        React.createElement("h3",{className:"text- font-semibold mb-3 text-white"},"3. TTS - Tạo giọng đọc"),
-        React.createElement("div",{className:"grid grid-cols-1 sm:grid-cols-2 gap-3"},[
-          React.createElement("div",{},[
-            React.createElement("label",{className:"block text- text-[#aaa] mb-1"},"Engine TTS"),
-            React.createElement("select",{value:ttsEngine,onChange:e=>setTtsEngine(e.target.value),className:"w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-"},
-              [React.createElement("option",{value:"edge"},"Edge TTS - Free"),React.createElement("option",{value:"openai"},"OpenAI TTS"),React.createElement("option",{value:"coqui"},"Coqui XTTS - Clone giọng"),React.createElement("option",{value:"piper"},"Piper TTS - Offline, nhẹ")]
-            )
+          React.createElement("div", { key: "urlsCard", className: "card" }, [
+            React.createElement("h3", { className: "text- font-semibold mb-3 text-white" }, "1. Danh sách link Douyin"),
+            React.createElement("textarea", { value: urls, onChange: e => setUrls(e.target.value), placeholder: "https://www.douyin.com/video/736...\nhttps://www.douyin.com/discover?modal_id=752...", className: "w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text- min-h- resize-y focus:outline-none focus:border-[#ff0050]" })
           ]),
-          React.createElement("div",{},[
-            React.createElement("label",{className:"block text- text-[#aaa] mb-1"},"Giọng đọc"),
-            React.createElement("select",{value:voice,onChange:e=>setVoice(e.target.value),className:"w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-"},
-              (voices[ttsEngine]||[]).map(v=>React.createElement("option",{key:v.value,value:v.value},v.label))
-            )
-          ])
-        ]),
-        ttsEngine==="openai" && React.createElement("input",{type:"password",value:ttsKey,onChange:e=>setTtsKey(e.target.value),placeholder:"sk-... cho OpenAI TTS",className:"mt-3 w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-"}),
-        ttsEngine==="coqui" && React.createElement("input",{value:customVoice,onChange:e=>setCustomVoice(e.target.value),placeholder:"path/to/reference.wav cho Coqui",className:"mt-3 w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-"})
-      ]),
-      React.createElement("div",{key:"actionCard",className:"card"},[
-        React.createElement("button",{onClick:handleMerge,disabled:merging,className:"bg-[#ff0050] hover:bg-[#e60048] disabled:opacity-50 text-white rounded- px-5 py-3 text- font-semibold w-full"},merging?`⏳ Đang tạo "${title}"...`:`🚀 Merge "${title||"..."}" & TTS`),
-        React.createElement("div",{ref:logRef,className:"bg-[#0f0f0f] border border-[#222] rounded- p-3 font-mono text- whitespace-pre-wrap max-h- overflow-auto mt-3 text-[#888]",style:{display:log?"block":"none"}},log),
-        React.createElement("div",{className:"mt-2"},results.map((r,i)=>
-          React.createElement("div",{key:i,className:"bg-[#1a1a1a] border border-[#333] rounded- p-3 mt-2 flex justify-between items-center gap-3 text-"},[
-            React.createElement("span",{},r.html),
-            React.createElement("div",{className:"flex gap-2"},[
-              r.html.includes("Sub ZH") && lastData?.srt_zh && React.createElement("button",{onClick:()=>handleTranslate(lastData.srt_zh,"vi"),className:"bg-[#222] hover:bg-[#333] text-white rounded- px-3 py-1 text-"},"Dịch sang VI"),
-              r.link && React.createElement("a",{href:r.link,target:"_blank",className:"text-[#ff0050] text-"},"Tải")
-            ])
-          ])
-        ))
-      ]),
-      lastData && React.createElement("div",{key:"finalCards",className:"card"},[
-        React.createElement("h3",{className:"text- font-semibold mb-3"},"4. Tạo Audio & 5. Video cuối"),
-        React.createElement("button",{onClick:handleTTS,className:"bg-[#222] hover:bg-[#333] text-white rounded- px-5 py-3 text- font-semibold w-full"},"🔊 Tạo Audio"),
-        ttsResult && React.createElement("div",{className:"bg-[#1a1a1a] border border-[#333] rounded- p-3 text- mt-3"},ttsResult),
-        React.createElement("div",{className:"grid grid-cols-2 gap-2 mt-3"},[
-          React.createElement("button",{onClick:()=>handleBurn(),className:"bg-[#ff0050] hover:bg-[#e60048] text-white rounded- px-4 py-3 text- font-semibold"},"🔥 Burn Sub"),
-          React.createElement("button",{onClick:handleDub,className:"bg-[#222] hover:bg-[#333] text-white rounded- px-4 py-3 text- font-semibold"},"🎙 Ghép audio")
-        ]),
-        burnResult && React.createElement("div",{className:"bg-[#1a1a1a] border border-[#333] rounded- p-3 text- mt-3"},burnResult)
-      ])
-    ]),
-
-    tab==="manager" && React.createElement("div",{key:"managerContent",className:"bg-[#141414] border border-t-0 border-[#222] rounded-b- p-4 pt-5"},[
-      React.createElement("div",{key:"searchBar",className:"card!p-3 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between"},[
-        React.createElement("div",{className:"flex-1 flex items-center gap-2 bg-[#1a1a1a] border border-[#333] rounded- px-3 py-2"},[
-          React.createElement("span",{className:"text-[#666]"},"🔍"),
-          React.createElement("input",{value:search,onChange:e=>setSearch(e.target.value),placeholder:"Tìm theo job_id / tên folder...",className:"flex-1 bg-transparent border-none outline-none text-white text-"})
-        ]),
-        React.createElement("div",{className:"flex gap-2"},[
-          React.createElement("button",{onClick:loadFolders,className:"bg-[#222] hover:bg-[#333] text-white rounded- px-4 py-2 text-"},"↻ Làm mới"),
-          React.createElement("span",{className:"bg-[#1a1a1a] border border-[#222] rounded- px-3 py-2 text- text-[#888] hidden sm:flex items-center"},`${folders.length} thư mục`)
-        ])
-      ]),
-      loadingFolders && React.createElement("div",{key:"loading",className:"card text-center py-8 text-[#888]"},"⏳ Đang tải danh sách video..."),
-     !loadingFolders && React.createElement("div",{key:"grid",className:"video-grid"},
-        filtered.length===0? [React.createElement("div",{key:"empty",className:"col-span-full text-center py-12"},[
-          React.createElement("div",{className:"text- mb-2"},"📁"),
-          React.createElement("div",{className:"text-[#888] text-"},search?`Không tìm thấy "${search}"`:"Chưa có video nào trong downloads/"),
-          React.createElement("div",{className:"text-[#555] text- mt-1"},"Hãy chạy Merge ở tab đầu tiên để tạo job folder")
-        ])] :
-        filtered.map(f=>{
-          const id=f.id||f.name||"";
-          return React.createElement("div",{key:id,className:"folder-card group",onClick:()=>loadDetail(id)},[
-            React.createElement("div",{className:"flex items-start justify-between gap-2"},[
-              React.createElement("div",{className:"flex gap-3"},[
-                React.createElement("div",{className:"w-10 h-10 rounded- bg-[#222] border border-[#333] flex items-center justify-center text- group-hover:border-[#ff0050]/40"},"🎬"),
-                React.createElement("div",{className:"min-w-0"},[
-                  React.createElement("div",{className:"text-white font-semibold text- truncate max-w-"},f.name||f.id),
-                  React.createElement("div",{className:"text-[#666] text- mt-0.5"},f.created? new Date(f.created*1000||f.created).toLocaleString("vi-VN") : id)
-                ])
+          React.createElement("div", { key: "whisperCard", className: "card" }, [
+            React.createElement("h3", { className: "text- font-semibold mb-3 text-white" }, "2. Whisper & Dịch"),
+            React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3" }, [
+              React.createElement("div", {}, [
+                React.createElement("label", { className: "block text- text-[#aaa] mb-1 mt-1" }, "Model Whisper"),
+                React.createElement("select", { value: model, onChange: e => setModel(e.target.value), className: "w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-" },
+                  [React.createElement("option", { value: "small" }, "Small - Nhanh (500MB)"), React.createElement("option", { value: "medium" }, "Medium - Chính xác (1.5GB)"), React.createElement("option", { value: "large-v3" }, "Large v3 - Nhất (3GB)")]
+                )
               ]),
-              React.createElement("div",{className:"text- text-[#888]"},f.total_size_str||"")
-            ]),
-            React.createElement("div",{className:"mt-3 flex flex-wrap"},[
-              React.createElement(Tag,{key:"count",show:true,cls:"bg-[#2a2a2a] border-[#333] text-[#ccc]"},`${f.file_count??"?"} files`),
-              React.createElement(Tag,{key:"zh",show:f.has_zh,cls:"bg-[#1e2a1e] border-[#2a4a2a] text-[#8f8]"},"ZH"),
-              React.createElement(Tag,{key:"vi",show:f.has_vi,cls:"bg-[#1e233a] border-[#2a3a6a] text-[#8af]"},"VI"),
-              React.createElement(Tag,{key:"dub",show:f.has_dubbed,cls:"bg-[#2a1e2a] border-[#4a2a4a] text-[#f8f]"},"DUBBED"),
-              React.createElement(Tag,{key:"burn",show:f.has_burned,cls:"bg-[#2a2a1e] border-[#4a4a2a] text-[#ff8]"},"BURNED")
-            ]),
-            React.createElement("div",{className:"mt-2 text- text-[#555] truncate"},f.id)
-          ]);
-        })
-      ),
-      (selected||loadingDetail) && React.createElement("div",{key:"detail",className:"mt-6"},[
-        loadingDetail && React.createElement("div",{className:"card text-center py-6 text-[#888]"},"⏳ Đang tải chi tiết..."),
-        selected &&!loadingDetail && React.createElement("div",{className:"card!p-0 overflow-hidden border-[#333]"},[
-          React.createElement("div",{className:"p-4 border-b border-[#222] flex items-start justify-between gap-3"},[
-            React.createElement("div",{},[
-              React.createElement("div",{className:"text-white font-bold text- flex items-center gap-2"},`📁 ${selected.job_id}`, React.createElement("span",{className:"bg-[#222] text-[#aaa] rounded px-2 py-0.5 text- font-normal"},selected.job_dir||`downloads/${selected.job_id}/`)),
-              React.createElement("div",{className:"text-[#666] text- mt-1"},"Nhấn để thiết lập lastMergeData và dùng các chức năng TTS / Burn / Dub")
-            ]),
-            React.createElement("button",{onClick:()=>setSelected(null),className:"bg-[#1a1a1a] border border-[#333] text-[#888] hover:text-white rounded- px-3 py-1.5 text-"},"✕ Đóng")
-          ]),
-          React.createElement("div",{className:"p-4 grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-4"},[
-            React.createElement("div",{},[
-              selected.error? React.createElement("div",{className:"bg-[#2a1a1a] border border-[#ff4444]/30 rounded- p-3 text-[#ff8a8a] text-"},selected.error) :
-              React.createElement(React.Fragment,{},[
-                (()=>{
-                  const mp4=selected.final_file||selected.final_mp4||selected.video||"";
-                  const src=mp4? (mp4.startsWith("/")?mp4:`/api/videos/${encodeURIComponent(selected.job_id)}/file/${encodeURIComponent(mp4.split("/").pop()||mp4)}`) : "";
-                  return mp4? React.createElement("div",{className:"bg-black rounded- overflow-hidden border border-[#222] aspect-video"},React.createElement("video",{controls:true,src,className:"w-full h-full object-contain"}))
-                  : React.createElement("div",{className:"bg-[#0f0f0f] border border-[#222] rounded- aspect-video flex items-center justify-center text-[#555] text-"},"Không tìm thấy file mp4 để preview");
-                })(),
-                React.createElement("div",{className:"mt-4"},[
-                  React.createElement("div",{className:"text-white font-semibold text- mb-2"},"📄 Danh sách file"),
-                  React.createElement("div",{className:"bg-[#0f0f0f] border border-[#222] rounded- divide-y divide-[#1a1a1a] max-h- overflow-auto"},
-                    (selected.files||[]).map((f,i)=>{
-                      const name=typeof f==="string"?f:f.name;
-                      const isMp4=name.endsWith(".mp4");const icon=isMp4?"🎬":name.endsWith(".srt")?"📝":name.endsWith(".txt")?"📄":name.endsWith(".mp3")||name.endsWith(".wav")?"🔊":"📦";
-                      const fileUrl=`/api/videos/${encodeURIComponent(selected.job_id)}/file/${encodeURIComponent(name.split("/").pop()||name)}`;
-                      return React.createElement("div",{key:i,className:"flex items-center justify-between gap-2 p-2.5 hover:bg-[#151515]"},[
-                        React.createElement("div",{className:"flex items-center gap-2 min-w-0"},[
-                          React.createElement("span",{className:"text-"},icon),
-                          React.createElement("span",{className:"text- text-[#ccc] truncate max-w-"},name.split("/").pop()||name)
-                        ]),
-                        React.createElement("a",{href:fileUrl,target:"_blank",className:"text-[#ff0050] text- hover:underline shrink-0"},"Tải")
-                      ]);
-                    })
-                  )
-                ])
+              React.createElement("div", {}, [
+                React.createElement("label", { className: "block text- text-[#aaa] mb-1 mt-1" }, "Engine dịch"),
+                React.createElement("select", { value: engine, onChange: e => setEngine(e.target.value), className: "w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-" },
+                  [React.createElement("option", { value: "google" }, "Google - Miễn phí"), React.createElement("option", { value: "deepl" }, "DeepL - Chính xác nhất"), React.createElement("option", { value: "gpt" }, "GPT-4o mini"), React.createElement("option", { value: "qwen" }, "Qwen 2 (Groq)"), React.createElement("option", { value: "gemini" }, "Gemini 1.5 Flash")]
+                )
               ])
             ]),
-            React.createElement("div",{className:"space-y-3"},[
-              React.createElement("div",{className:"bg-[#1a1a1a] border border-[#222] rounded- p-3"},[
-                React.createElement("div",{className:"text-white font-semibold text- mb-2"},"⚡ Hành động nhanh"),
-                React.createElement("div",{className:"grid grid-cols-1 gap-2"},[
-                  selected.srt_zh && React.createElement("button",{onClick:()=>handleTranslate(selected.srt_zh,"vi",selected.job_id),className:"bg-[#222] hover:bg-[#333] text-white rounded- px-3 py-2.5 text- text-left"},`🌐 Dịch ZH → VI\n${selected.srt_zh.split("/").pop()}`),
-                  React.createElement("button",{onClick:handleTTS,className:"bg-[#222] hover:bg-[#2a2a2a] text-white rounded- px-3 py-2.5 text- text-left"},`🔊 Tạo Audio TTS\nDùng ${ttsEngine} • ${voice}`),
-                  React.createElement("div",{className:"grid grid-cols-2 gap-2"},[
-                    React.createElement("button",{onClick:()=>handleBurn(),className:"bg-[#ff0050] hover:bg-[#e60048] text-white rounded- px-3 py-2.5 text- font-medium"},"🔥 Burn Sub"),
-                    React.createElement("button",{onClick:handleDub,className:"bg-[#222] hover:bg-[#333] text-white rounded- px-3 py-2.5 text- font-medium"},"🎙 Ghép audio")
+            React.createElement("label", { className: "block text- text-[#aaa] mt-3 mb-1" }, "API Key cho DeepL / GPT / Groq / Gemini"),
+            React.createElement("input", { type: "password", value: apiKey, onChange: e => setApiKey(e.target.value), placeholder: "sk-..., groq_..., AIza...", className: "w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text- mt-1" }),
+            React.createElement("label", { className: "block text- text-[#aaa] mt-3 mb-1" }, "Dịch sang"),
+            React.createElement("select", { value: translate, onChange: e => setTranslate(e.target.value), className: "w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-" },
+              [React.createElement("option", { value: "vi" }, "Tiếng Việt"), React.createElement("option", { value: "en" }, "English"), React.createElement("option", { value: "vi,en" }, "Cả Việt + Anh")]
+            )
+          ]),
+          React.createElement("div", { key: "ttsEngineCard", className: "card" }, [
+            React.createElement("h3", { className: "text- font-semibold mb-3 text-white" }, "3. TTS - Tạo giọng đọc"),
+            React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3" }, [
+              React.createElement("div", {}, [
+                React.createElement("label", { className: "block text- text-[#aaa] mb-1" }, "Engine TTS"),
+                React.createElement("select", { value: ttsEngine, onChange: e => setTtsEngine(e.target.value), className: "w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-" },
+                  [React.createElement("option", { value: "edge" }, "Edge TTS - Free"), React.createElement("option", { value: "openai" }, "OpenAI TTS"), React.createElement("option", { value: "coqui" }, "Coqui XTTS - Clone giọng"), React.createElement("option", { value: "piper" }, "Piper TTS - Offline, nhẹ")]
+                )
+              ]),
+              React.createElement("div", {}, [
+                React.createElement("label", { className: "block text- text-[#aaa] mb-1" }, "Giọng đọc"),
+                React.createElement("select", { value: voice, onChange: e => setVoice(e.target.value), className: "w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-" },
+                  (voices[ttsEngine] || []).map(v => React.createElement("option", { key: v.value, value: v.value }, v.label))
+                )
+              ])
+            ]),
+            ttsEngine === "openai" && React.createElement("input", { type: "password", value: ttsKey, onChange: e => setTtsKey(e.target.value), placeholder: "sk-... cho OpenAI TTS", className: "mt-3 w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-" }),
+            ttsEngine === "coqui" && React.createElement("input", { value: customVoice, onChange: e => setCustomVoice(e.target.value), placeholder: "path/to/reference.wav cho Coqui", className: "mt-3 w-full bg-[#1a1a1a] border border-[#333] text-white rounded- p-3 text-" })
+          ]),
+          React.createElement("div", { key: "actionCard", className: "card" }, [
+            React.createElement("button", { onClick: handleMerge, disabled: merging, className: "bg-[#ff0050] hover:bg-[#e60048] disabled:opacity-50 text-white rounded- px-5 py-3 text- font-semibold w-full" }, merging ? `⏳ Đang tạo "${title}"...` : `🚀 Merge "${title || "..."}" & TTS`),
+            React.createElement("div", { ref: logRef, className: "bg-[#0f0f0f] border border-[#222] rounded- p-3 font-mono text- whitespace-pre-wrap max-h- overflow-auto mt-3 text-[#888]", style: { display: log ? "block" : "none" } }, log),
+            React.createElement("div", { className: "mt-2" }, results.map((r, i) =>
+              React.createElement("div", { key: i, className: "bg-[#1a1a1a] border border-[#333] rounded- p-3 mt-2 flex justify-between items-center gap-3 text-" }, [
+                React.createElement("span", {}, r.html),
+                React.createElement("div", { className: "flex gap-2" }, [
+                  r.html.includes("Sub ZH") && lastData?.srt_zh && React.createElement("button", { onClick: () => handleTranslate(lastData.srt_zh, "vi"), className: "bg-[#222] hover:bg-[#333] text-white rounded- px-3 py-1 text-" }, "Dịch sang VI"),
+                  r.link && React.createElement("a", { href: r.link, target: "_blank", className: "text-[#ff0050] text-" }, "Tải")
+                ])
+              ])
+            ))
+          ]),
+          lastData && React.createElement("div", { key: "finalCards", className: "card" }, [
+            React.createElement("h3", { className: "text- font-semibold mb-3" }, "4. Tạo Audio & 5. Video cuối"),
+            React.createElement("button", { onClick: handleTTS, className: "bg-[#222] hover:bg-[#333] text-white rounded- px-5 py-3 text- font-semibold w-full" }, "🔊 Tạo Audio"),
+            ttsResult && React.createElement("div", { className: "bg-[#1a1a1a] border border-[#333] rounded- p-3 text- mt-3" }, ttsResult),
+            React.createElement("div", { className: "grid grid-cols-2 gap-2 mt-3" }, [
+              React.createElement("button", { onClick: () => handleBurn(), className: "bg-[#ff0050] hover:bg-[#e60048] text-white rounded- px-4 py-3 text- font-semibold" }, "🔥 Burn Sub"),
+              React.createElement("button", { onClick: handleDub, className: "bg-[#222] hover:bg-[#333] text-white rounded- px-4 py-3 text- font-semibold" }, "🎙 Ghép audio")
+            ]),
+            burnResult && React.createElement("div", { className: "bg-[#1a1a1a] border border-[#333] rounded- p-3 text- mt-3" }, burnResult)
+          ])
+        ]),
+
+        tab === "manager" && React.createElement("div", { key: "managerContent", className: "bg-[#141414] border border-t-0 border-[#222] rounded-b- p-4 pt-5" }, [
+          React.createElement("div", { key: "searchBar", className: "card!p-3 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between" }, [
+            React.createElement("div", { className: "flex-1 flex items-center gap-2 bg-[#1a1a1a] border border-[#333] rounded- px-3 py-2" }, [
+              React.createElement("span", { className: "text-[#666]" }, "🔍"),
+              React.createElement("input", { value: search, onChange: e => setSearch(e.target.value), placeholder: "Tìm theo job_id / tên folder...", className: "flex-1 bg-transparent border-none outline-none text-white text-" })
+            ]),
+            React.createElement("div", { className: "flex gap-2" }, [
+              React.createElement("button", { onClick: loadFolders, className: "bg-[#222] hover:bg-[#333] text-white rounded- px-4 py-2 text-" }, "↻ Làm mới"),
+              React.createElement("span", { className: "bg-[#1a1a1a] border border-[#222] rounded- px-3 py-2 text- text-[#888] hidden sm:flex items-center" }, `${folders.length} thư mục`)
+            ])
+          ]),
+          loadingFolders && React.createElement("div", { key: "loading", className: "card text-center py-8 text-[#888]" }, "⏳ Đang tải danh sách video..."),
+          !loadingFolders && React.createElement("div", { key: "grid", className: "video-grid" },
+            filtered.length === 0 ? [React.createElement("div", { key: "empty", className: "col-span-full text-center py-12" }, [
+              React.createElement("div", { className: "text- mb-2" }, "📁"),
+              React.createElement("div", { className: "text-[#888] text-" }, search ? `Không tìm thấy "${search}"` : "Chưa có video nào trong downloads/"),
+              React.createElement("div", { className: "text-[#555] text- mt-1" }, "Hãy chạy Merge ở tab đầu tiên để tạo job folder")
+            ])] :
+              filtered.map(f => {
+                const id = f.id || f.name || "";
+                return React.createElement("div", { key: id, className: "folder-card group", onClick: () => loadDetail(id) }, [
+                  React.createElement("div", { className: "flex items-start justify-between gap-2" }, [
+                    React.createElement("div", { className: "flex gap-3" }, [
+                      React.createElement("div", { className: "w-10 h-10 rounded- bg-[#222] border border-[#333] flex items-center justify-center text- group-hover:border-[#ff0050]/40" }, "🎬"),
+                      React.createElement("div", { className: "min-w-0" }, [
+                        React.createElement("div", { className: "text-white font-semibold text- truncate max-w-" }, f.name || f.id),
+                        React.createElement("div", { className: "text-[#666] text- mt-0.5" }, f.created ? new Date(f.created * 1000 || f.created).toLocaleString("vi-VN") : id)
+                      ])
+                    ]),
+                    React.createElement("div", { className: "text- text-[#888]" }, f.total_size_str || "")
                   ]),
-                  ttsResult && React.createElement("div",{className:"bg-[#0f0f0f] border border-[#222] rounded- p-2 text- text-[#aaa]"},ttsResult),
-                  burnResult && React.createElement("div",{className:"bg-[#0f0f0f] border border-[#222] rounded- p-2 text- text-[#aaa]"},burnResult)
-                ])
+                  React.createElement("div", { className: "mt-3 flex flex-wrap" }, [
+                    React.createElement(Tag, { key: "count", show: true, cls: "bg-[#2a2a2a] border-[#333] text-[#ccc]" }, `${f.file_count ?? "?"} files`),
+                    React.createElement(Tag, { key: "zh", show: f.has_zh, cls: "bg-[#1e2a1e] border-[#2a4a2a] text-[#8f8]" }, "ZH"),
+                    React.createElement(Tag, { key: "vi", show: f.has_vi, cls: "bg-[#1e233a] border-[#2a3a6a] text-[#8af]" }, "VI"),
+                    React.createElement(Tag, { key: "dub", show: f.has_dubbed, cls: "bg-[#2a1e2a] border-[#4a2a4a] text-[#f8f]" }, "DUBBED"),
+                    React.createElement(Tag, { key: "burn", show: f.has_burned, cls: "bg-[#2a2a1e] border-[#4a4a2a] text-[#ff8]" }, "BURNED")
+                  ]),
+                  React.createElement("div", { className: "mt-2 text- text-[#555] truncate" }, f.id)
+                ]);
+              })
+          ),
+          (selected || loadingDetail) && React.createElement("div", { key: "detail", className: "mt-6" }, [
+            loadingDetail && React.createElement("div", { className: "card text-center py-6 text-[#888]" }, "⏳ Đang tải chi tiết..."),
+            selected && !loadingDetail && React.createElement("div", { className: "card!p-0 overflow-hidden border-[#333]" }, [
+              React.createElement("div", { className: "p-4 border-b border-[#222] flex items-start justify-between gap-3" }, [
+                React.createElement("div", {}, [
+                  React.createElement("div", { className: "text-white font-bold text- flex items-center gap-2" }, `📁 ${getSelectedId()}`, React.createElement("span", { className: "bg-[#222] text-[#aaa] rounded px-2 py-0.5 text- font-normal" }, selected.job_dir || `downloads/${getSelectedId()}/`)),
+                  React.createElement("div", { className: "text-[#666] text- mt-1" }, "Nhấn để thiết lập lastMergeData và dùng các chức năng TTS / Burn / Dub")
+                ]),
+                React.createElement("button", { onClick: () => setSelected(null), className: "bg-[#1a1a1a] border border-[#333] text-[#888] hover:text-white rounded- px-3 py-1.5 text-" }, "✕ Đóng")
               ]),
-              React.createElement("div",{className:"bg-[#1a1a1a] border border-[#222] rounded- p-3"},[
-                React.createElement("div",{className:"text-white font-semibold text- mb-2"},"📦 Thông tin Job"),
-                React.createElement("div",{className:"space-y-1.5 text-"},[
-                  React.createElement("div",{className:"flex justify-between"},[React.createElement("span",{className:"text-[#666]"},"Job ID"),React.createElement("span",{className:"text-[#ccc] font-mono"},selected.job_id)]),
-                  selected.job_dir && React.createElement("div",{className:"flex justify-between"},[React.createElement("span",{className:"text-[#666]"},"Thư mục"),React.createElement("span",{className:"text-[#ccc] truncate max-w-"},selected.job_dir)])
+              React.createElement("div", { className: "p-4 grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-4" }, [
+                React.createElement("div", {}, [
+                  selected.error ? React.createElement("div", { className: "bg-[#2a1a1a] border border-[#ff4444]/30 rounded- p-3 text-[#ff8a8a] text-" }, selected.error) :
+                    React.createElement(React.Fragment, {}, [
+                      // VIDEO PREVIEW - sẽ đổi khi double click
+                      previewFile ? React.createElement("div", { className: "bg-black rounded overflow-hidden border border-[#222]" }, [
+                        React.createElement("video", { key: previewFile.url, controls: true, autoPlay: true, src: previewFile.url, className: "w-full aspect-video object-contain" }),
+                        React.createElement("div", { className: "p-2 text- text-[#888] bg-[#111]" }, `Đang phát: ${previewFile.name} • Double-click file mp4 khác bên dưới để đổi`)
+                      ])
+                        : React.createElement("div", { className: "bg-[#0f0f0f] border border-[#222] rounded aspect-video flex items-center justify-center text-[#555]" }, "Không có video để preview"),
+
+                      React.createElement("div", { className: "mt-4" }, [
+                        // DANH SÁCH FILE - DOUBLE CLICK ĐỂ PREVIEW
+                        React.createElement("div", { className: "mt-4" }, [
+                          React.createElement("div", { className: "font-semibold mb-2" }, "📄 Danh sách file (Double-click vào file mp4 để preview ở trên)"),
+                          React.createElement("div", { className: "bg-[#0f0f0f] border border-[#222] rounded divide-y divide-[#1a1a1a] max-h- overflow-auto" },
+                            (selected.files || []).map((f, i) => {
+                              const name = typeof f === "string" ? f : f.name;
+                              const isMp4 = name.toLowerCase().endsWith(".mp4");
+                              const fileUrl = `/api/videos/${encodeURIComponent(getSelectedId())}/file/${encodeURIComponent(name.split("/").pop() || name)}`;
+                              const isActive = previewFile && previewFile.url === fileUrl;
+                              return React.createElement("div", {
+                                key: i,
+                                onDoubleClick: () => {
+                                  if (isMp4) {
+                                    setPreviewFile({ name: name.split("/").pop() || name, url: fileUrl });
+                                    // scroll lên trên
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }
+                                },
+                                title: isMp4 ? "Double-click để preview" : "",
+                                className: `flex items-center justify-between gap-2 p-2.5 hover:bg-[#1a1a1a] cursor-pointer ${isActive ? "bg-[#1f1f1f] border-l-2 border-[#ff0050]" : ""} ${isMp4 ? "" : "opacity-70"}`
+                              }, [
+                                React.createElement("div", { className: "flex items-center gap-2 min-w-0" }, [
+                                  React.createElement("span", {}, isMp4 ? "🎬" : "📄"),
+                                  React.createElement("span", { className: `text- truncate ${isActive ? "text-white font-bold" : "text-[#ccc]"}` }, name.split("/").pop() || name),
+                                  isMp4 && React.createElement("span", { className: "text- bg-[#ff0050]/20 text-[#ff0050] px-1.5 py-0.5 rounded ml-1" }, "double-click để xem")
+                                ]),
+                                React.createElement("a", { href: fileUrl, target: "_blank", onClick: e => e.stopPropagation(), className: "text-[#ff0050] text- hover:underline shrink-0" }, "Tải")
+                              ]);
+                            })
+                          )
+                        ]),
+                      ])
+                    ])
+                ]),
+                React.createElement("div", { className: "space-y-3" }, [
+                  React.createElement("div", { className: "bg-[#1a1a1a] border border-[#222] rounded- p-3" }, [
+                    React.createElement("div", { className: "bg-[#1a1a1a] border border-[#222] rounded- p-3" }, [
+                      React.createElement("div", { className: "text-white font-semibold text- mb-2" }, "⚡ Hành động nhanh"),
+                      React.createElement("div", { className: "grid grid-cols-1 gap-2" }, [
+                        // NÚT MỚI - TẠO SUB
+                        React.createElement("button", { onClick: handleCreateSub, disabled: creatingSub, className: "bg-[#ff0050] hover:bg-[#e60048] disabled:opacity-50 text-white rounded- px-3 py-2.5 text- font-bold" }, creatingSub ? "⏳ Đang tạo sub..." : "📝 Tạo Sub (ZH) - Whisper"),
+                        selected.srt_zh && React.createElement("button", { onClick: () => handleTranslate(selected.srt_zh, "vi", getSelectedId()), className: "bg-[#222] hover:bg-[#333] text-white rounded- px-3 py-2.5 text- text-left" }, `🌐 Dịch ZH → VI\n${selected.srt_zh.split("/").pop()}`),
+                        React.createElement("button", { onClick: handleTTS, className: "bg-[#222] hover:bg-[#2a2a2a] text-white rounded- px-3 py-2.5 text- text-left" }, `🔊 Tạo Audio TTS\nDùng ${ttsEngine} • ${voice}`),
+                        React.createElement("div", { className: "grid grid-cols-2 gap-2" }, [
+                          React.createElement("button", { onClick: () => handleBurn(), className: "bg-[#ff0050] hover:bg-[#e60048] text-white rounded- px-3 py-2.5 text- font-medium" }, "🔥 Burn Sub"),
+                          React.createElement("button", { onClick: handleDub, className: "bg-[#222] hover:bg-[#333] text-white rounded- px-3 py-2.5 text- font-medium" }, "🎙 Ghép audio")
+                        ]),
+                        ttsResult && React.createElement("div", { className: "bg-[#0f0f0f] border border-[#222] rounded- p-2 text- text-[#aaa]" }, ttsResult),
+                        burnResult && React.createElement("div", { className: "bg-[#0f0f0f] border border-[#222] rounded- p-2 text- text-[#aaa]" }, burnResult)
+                      ])
+                    ]),
+                    React.createElement("div", { className: "grid grid-cols-1 gap-2" }, [
+                      selected.srt_zh && React.createElement("button", { onClick: () => handleTranslate(selected.srt_zh, "vi", getSelectedId()), className: "bg-[#222] hover:bg-[#333] text-white rounded- px-3 py-2.5 text- text-left" }, `🌐 Dịch ZH → VI\n${selected.srt_zh.split("/").pop()}`),
+                      React.createElement("button", { onClick: handleTTS, className: "bg-[#222] hover:bg-[#2a2a2a] text-white rounded- px-3 py-2.5 text- text-left" }, `🔊 Tạo Audio TTS\nDùng ${ttsEngine} • ${voice}`),
+                      React.createElement("div", { className: "grid grid-cols-2 gap-2" }, [
+                        React.createElement("button", { onClick: () => handleBurn(), className: "bg-[#ff0050] hover:bg-[#e60048] text-white rounded- px-3 py-2.5 text- font-medium" }, "🔥 Burn Sub"),
+                        React.createElement("button", { onClick: handleDub, className: "bg-[#222] hover:bg-[#333] text-white rounded- px-3 py-2.5 text- font-medium" }, "🎙 Ghép audio")
+                      ]),
+                      ttsResult && React.createElement("div", { className: "bg-[#0f0f0f] border border-[#222] rounded- p-2 text- text-[#aaa]" }, ttsResult),
+                      burnResult && React.createElement("div", { className: "bg-[#0f0f0f] border border-[#222] rounded- p-2 text- text-[#aaa]" }, burnResult)
+                    ])
+                  ]),
+                  React.createElement("div", { className: "bg-[#1a1a1a] border border-[#222] rounded- p-3" }, [
+                    React.createElement("div", { className: "text-white font-semibold text- mb-2" }, "📦 Thông tin Job"),
+                    React.createElement("div", { className: "space-y-1.5 text-" }, [
+                      React.createElement("div", { className: "flex justify-between" }, [React.createElement("span", { className: "text-[#666]" }, "Job ID"), React.createElement("span", { className: "text-[#ccc] font-mono" }, getSelectedId())]),
+                      selected.job_dir && React.createElement("div", { className: "flex justify-between" }, [React.createElement("span", { className: "text-[#666]" }, "Thư mục"), React.createElement("span", { className: "text-[#ccc] truncate max-w-" }, selected.job_dir)])
+                    ])
+                  ]),
+                  React.createElement("div", { className: "bg-[#1a1a1a] border border-[#222] rounded- p-3" }, [
+                    React.createElement("div", { className: "text-[#ff6b6b] font-semibold text- mb-2" }, "🗑 Vùng nguy hiểm"),
+                    React.createElement("button", { onClick: () => handleDelete(getSelectedId()), className: "w-full bg-[#2a1a1a] hover:bg-[#3a1a1a] border border-[#ff4444]/20 text-[#ff8888] rounded- px-3 py-2.5 text-" }, `Xóa folder ${getSelectedId()}`),
+                    React.createElement("div", { className: "text- text-[#666] mt-2" }, `Xóa sẽ gọi DELETE /api/videos/${getSelectedId()}`)
+                  ])
                 ])
-              ]),
-              React.createElement("div",{className:"bg-[#1a1a1a] border border-[#222] rounded- p-3"},[
-                React.createElement("div",{className:"text-[#ff6b6b] font-semibold text- mb-2"},"🗑 Vùng nguy hiểm"),
-                React.createElement("button",{onClick:()=>handleDelete(selected.job_id),className:"w-full bg-[#2a1a1a] hover:bg-[#3a1a1a] border border-[#ff4444]/20 text-[#ff8888] rounded- px-3 py-2.5 text-"},`Xóa folder ${selected.job_id}`),
-                React.createElement("div",{className:"text- text-[#666] mt-2"},`Xóa sẽ gọi DELETE /api/videos/${selected.job_id}`)
               ])
             ])
           ])
         ])
-      ])
-    ])
-  ]);
-}
-ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
-</script>
+      ]);
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+  </script>
 </body>
+
 </html>

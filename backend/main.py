@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -8,12 +8,21 @@ from subtitle import video_to_subs, auto_model, get_ram, _translate_blocks, get_
 from ffmpeg_helper import get_ffmpeg_path, check_ffmpeg, run_ffmpeg
 from pathlib import Path
 from datetime import datetime
+import mimetypes
 
 try:
     from youtube_uploader import upload_video as yt_upload, check_auth as yt_check_auth, save_client_secret_from_json
     YT_AVAILABLE=True
 except:
     YT_AVAILABLE=False
+
+BASE_DIR = Path(__file__).parent.resolve()
+HF_CACHE_DIR = BASE_DIR / "hf_cache"
+HF_CACHE_DIR.mkdir(exist_ok=True)
+
+os.environ["HF_HOME"] = str(HF_CACHE_DIR)
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"  # tắt cảnh báo symlink
+os.environ["HF_TOKEN"] = ""  # token của bạn lấy ở huggingface.co/settings/tokens
 
 app=FastAPI(title="Douyin v10.3 pip install ffmpeg")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -602,6 +611,79 @@ async def delete_video_folder(folder_id: str):
         return {"success": False, "error": "Not found"}
     shutil.rmtree(folder_path)
     return {"success": True}
+
+@app.post("/api/videos/{job_id}/generate-sub")
+async def generate_sub_for_job(job_id: str, data: dict = {}):
+    job_dir = os.path.join(DOWNLOAD_DIR, job_id)
+    if not os.path.exists(job_dir):
+        return {"error": "job not found"}
+    
+    # tìm file final
+    final_file = None
+    for f in os.listdir(job_dir):
+        if f.startswith("final") and f.endswith(".mp4"):
+            final_file = os.path.join(job_dir, f)
+            break
+    if not final_file:
+        # fallback file mp4 đầu tiên
+        for f in os.listdir(job_dir):
+            if f.endswith(".mp4"):
+                final_file = os.path.join(job_dir, f)
+                break
+    if not final_file:
+        return {"error": "không tìm thấy mp4"}
+
+    model_name = data.get("model", "medium")
+    lang = data.get("lang", "zh")
+
+    try:
+        srt_path, txt_path, _, used = video_to_subs(final_file, lang=lang, model_name=model_name)
+        return {
+            "ok": True,
+            "srt_zh": f"/downloads/{job_id}/{os.path.basename(srt_path)}",
+            "txt_zh": f"/downloads/{job_id}/{os.path.basename(txt_path)}",
+            "used_model": used,
+            "files_in_job": os.listdir(job_dir)
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e), "trace": traceback.format_exc()[-1000:]}
+
+@app.get("/api/videos/{job_id}/file/{filename}")
+async def serve_video_file(job_id: str, filename: str, request: Request):
+    # bảo vệ không cho ../
+    safe_name = Path(filename).name
+    job_dir = DOWNLOADS_DIR / job_id
+    file_path = job_dir / safe_name
+    
+    if not job_dir.exists():
+        return {"error": f"job {job_id} not found"}
+    if not file_path.exists():
+        # thử tìm file chứa tên
+        for f in job_dir.iterdir():
+            if f.name == safe_name or safe_name in f.name:
+                file_path = f
+                break
+    
+    if not file_path.exists():
+        return {"error": f"file {safe_name} not found in {job_id}"}
+
+    mime, _ = mimetypes.guess_type(str(file_path))
+    return FileResponse(
+        path=file_path,
+        media_type=mime or "application/octet-stream",
+        filename=file_path.name,
+        headers={
+            "Accept-Ranges": "bytes",
+            "Cache-Control": "no-cache"
+        }
+    )
+
+# endpoint cũ để tương thích với frontend cũ dùng /downloads/...
+@app.get("/downloads/{job_id}/{filename}")
+async def serve_downloads_compat(job_id: str, filename: str, request: Request):
+    return await serve_video_file(job_id, filename, request)
 
 app.mount("/downloads", StaticFiles(directory=DOWNLOAD_DIR), name="downloads")
 app.mount("/voices", StaticFiles(directory=VOICE_DIR), name="voices")

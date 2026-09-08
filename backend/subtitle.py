@@ -3,10 +3,19 @@ from faster_whisper import WhisperModel
 from deep_translator.exceptions import TranslationNotFound
 import os, platform, subprocess, shutil, psutil
 import numpy as np
+from pathlib import Path
 try:
     import mlx_whisper
 except ImportError:
     mlx_whisper = None
+
+BASE_DIR = Path(__file__).parent.resolve()
+HF_CACHE_DIR = BASE_DIR / "hf_cache"
+HF_CACHE_DIR.mkdir(exist_ok=True)
+
+os.environ["HF_HOME"] = str(HF_CACHE_DIR)
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"  # tắt cảnh báo symlink
+os.environ["HF_TOKEN"] = ""  # token của bạn lấy ở huggingface.co/settings/tokens
 
 _model=None; _current=None
 def get_ram(): 
